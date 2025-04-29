@@ -16,7 +16,7 @@ from hf_wrapper import GPTForSequenceClassification
 from model import GPT, GPTConfig
 
 
-def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', bias: bool = False) -> GPT:
+def load_pretrained_model(path: pathlib.Path, device: str = 'cuda') -> GPT:
     # Load the pretrained model
     print(f"Loading pretrained model from {path}")
     checkpoint = torch.load(path, map_location=device)
