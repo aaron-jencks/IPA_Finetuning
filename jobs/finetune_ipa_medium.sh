@@ -63,7 +63,7 @@ echo "Batch size: $batch_size"
 
 # Script specific names
 model="openwebtext_ipa_multi_node_12_5_medium"
-wandb_project="ipa-finetuning-ipa"
+wandb_project="ipa-finetuning-ipa-medium"
 dataset="transcribed/glue-ipa"
 
 checkpoint_path="$checkpoints_prefix/$model/ckpt.pt"
