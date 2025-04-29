@@ -137,7 +137,6 @@ if __name__ == "__main__":
         weight_decay=0.01,
         logging_dir=args.log_dir,
         logging_steps=args.log_interval,
-        load_best_model_at_end=True,
         report_to='wandb'
     )
 
