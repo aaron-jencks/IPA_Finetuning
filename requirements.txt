@@ -1,0 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+datasets
+evaluate
+scikit-learn
+scipy
+torch
+transformers[torch]
