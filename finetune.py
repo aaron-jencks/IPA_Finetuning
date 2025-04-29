@@ -6,12 +6,12 @@ import evaluate
 import torch
 from transformers import (
     GPT2TokenizerFast,
-    AutoModelForSequenceClassification,
     Trainer,
     TrainingArguments,
     DataCollatorWithPadding,
 )
 
+from hf_wrapper import GPTForSequenceClassification
 from model import GPT, GPTConfig
 
 
@@ -59,6 +59,7 @@ if __name__ == "__main__":
     ap.add_argument('--from-disk', action='store_true')
     ap.add_argument('--no-subset', action='store_true')
     ap.add_argument('--log-dir', type=pathlib.Path, default=pathlib.Path('logs'))
+    ap.add_argument('--log-interval', type=int, default=10)
     ap.add_argument('--device', type=str, default='cuda')
     args = ap.parse_args()
 
@@ -78,22 +79,18 @@ if __name__ == "__main__":
 
     # ---- Load model ----
     base_model = load_pretrained_model(args.model, args.device)
-    model = AutoModelForSequenceClassification.from_pretrained(
-        str(args.model),
-        num_labels=2,
-    )
-    model.resize_token_embeddings(len(tokenizer))
+    model = GPTForSequenceClassification(base_model).to(args.device)
 
     # ---- Load dataset ----
     if args.no_subset:
         if args.from_disk:
-            dataset = load_from_disk(args.parent_dataset)
+            dataset = load_from_disk(args.dataset)
         else:
-            dataset = load_dataset(args.parent_dataset)
+            dataset = load_dataset(args.dataset)
     else:
         if args.from_disk:
             raise Exception('can\'t load from disk with subset.')
-        dataset = load_dataset(args.parent_dataset, args.dataset, cache_dir=str(args.hf_cache))
+        dataset = load_dataset(args.dataset, args.task, cache_dir=str(args.hf_cache_dir))
 
 
     # ---- Preprocessing ----
@@ -124,15 +121,15 @@ if __name__ == "__main__":
     # ---- Training arguments ----
     training_args = TrainingArguments(
         output_dir=args.output,
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         save_strategy="epoch",
         learning_rate=2e-5,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
         num_train_epochs=args.epochs,
         weight_decay=0.01,
-        logging_dir='./logs',
-        logging_steps=10,
+        logging_dir=args.log_dir,
+        logging_steps=args.log_interval,
         load_best_model_at_end=True,
     )
 
