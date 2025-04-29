@@ -20,7 +20,7 @@ tasks=("sst2" "mrpc" "rte" "qnli" "qqp" "cola" "wnli" "stsb")
 for task in "${tasks[@]}"; do
   for lr in "${learning_rates[@]}"; do
       for bs in "${batch_sizes[@]}"; do
-          echo "Submitting job: $script --learning-rate $lr --batch-size $bs"
+          echo "Submitting job: $script --task $task --learning-rate $lr --batch-size $bs"
           sbatch "$script" "--task=$task" "--learning-rate=$lr" "--batch-size=$bs"
       done
   done
