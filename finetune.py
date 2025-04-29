@@ -17,6 +17,18 @@ from hf_wrapper import GPTForSequenceClassification
 from model import GPT, GPTConfig
 
 
+class_counts = {
+    'ax': 3,
+    'cola': 2,
+    'qnli': 2,
+    'qqp': 2,
+    'rte': 2,
+    'sst2': 2,
+    'stsb': 6,
+    'wnli': 2,
+}
+
+
 def load_pretrained_model(path: pathlib.Path, device: str = 'cuda') -> GPT:
     # Load the pretrained model
     print(f"Loading pretrained model from {path}")
@@ -51,7 +63,7 @@ if __name__ == "__main__":
     ap.add_argument('--merges', type=pathlib.Path, required=True)
     ap.add_argument('--model', type=pathlib.Path, required=True)
     ap.add_argument('--task', type=str, required=True,
-                    choices=["sst2", "mrpc", "rte", "qnli", "qqp", "cola", "wnli", "stsb"])
+                    choices=["ax", "sst2", "mrpc", "rte", "qnli", "qqp", "cola", "wnli", "stsb"])
     ap.add_argument('--output', type=pathlib.Path, required=True)
     ap.add_argument('--epochs', type=int, default=3)
     ap.add_argument('--eval-interval', type=int, default=500)
@@ -86,7 +98,7 @@ if __name__ == "__main__":
 
     # ---- Load model ----
     base_model = load_pretrained_model(args.model, args.device)
-    model = GPTForSequenceClassification(base_model).to(args.device)
+    model = GPTForSequenceClassification(base_model, num_classes=class_counts[args.task]).to(args.device)
 
     # ---- Load dataset ----
     if args.no_subset:
@@ -108,9 +120,14 @@ if __name__ == "__main__":
         if 'premise' in examples:
             feature = flatten_multi_features(examples, ['premise', 'hypothesis'])
         elif 'question' in examples:
-            feature = flatten_multi_features(examples, ['question', 'hypothesis'])
+            if 'sentence' in examples:
+                feature = flatten_multi_features(examples, ['question', 'sentence'])
+            else:
+                feature = flatten_multi_features(examples, ['question', 'hypothesis'])
         elif 'sentence1' in examples:
             feature = flatten_multi_features(examples, ['sentence1', 'sentence2'])
+        elif 'question1' in examples:
+            feature = flatten_multi_features(examples, ['question1', 'question2'])
         else:
             feature = examples['sentence']
 
