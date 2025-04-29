@@ -17,17 +17,6 @@ from hf_wrapper import GPTForSequenceClassification
 from model import GPT, GPTConfig
 
 
-class_counts = {
-    'ax': 3,
-    'cola': 2,
-    'qnli': 2,
-    'qqp': 2,
-    'rte': 2,
-    'sst2': 2,
-    'wnli': 2,
-}
-
-
 def load_pretrained_model(path: pathlib.Path, device: str = 'cuda') -> GPT:
     # Load the pretrained model
     print(f"Loading pretrained model from {path}")
@@ -62,7 +51,7 @@ if __name__ == "__main__":
     ap.add_argument('--merges', type=pathlib.Path, required=True)
     ap.add_argument('--model', type=pathlib.Path, required=True)
     ap.add_argument('--task', type=str, required=True,
-                    choices=["ax", "sst2", "mrpc", "rte", "qnli", "qqp", "cola", "wnli"])
+                    choices=["sst2", "mrpc", "rte", "qnli", "qqp", "cola", "wnli"])
     ap.add_argument('--output', type=pathlib.Path, required=True)
     ap.add_argument('--epochs', type=int, default=3)
     ap.add_argument('--eval-interval', type=int, default=500)
@@ -97,7 +86,7 @@ if __name__ == "__main__":
 
     # ---- Load model ----
     base_model = load_pretrained_model(args.model, args.device)
-    model = GPTForSequenceClassification(base_model, num_classes=class_counts[args.task]).to(args.device)
+    model = GPTForSequenceClassification(base_model).to(args.device)
 
     # ---- Load dataset ----
     if args.no_subset:
