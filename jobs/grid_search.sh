@@ -14,11 +14,14 @@ fi
 # Define grid
 learning_rates=(1e-5 2e-5 3e-5 5e-5)
 batch_sizes=(8 16 32 64 128)
+tasks=("sst2" "mrpc" "rte" "qnli" "qqp" "cola" "wnli" "stsb")
 
 # Loop over all combinations
-for lr in "${learning_rates[@]}"; do
-    for bs in "${batch_sizes[@]}"; do
-        echo "Submitting job: $script --learning-rate $lr --batch-size $bs"
-        sbatch "$script" "--learning-rate=$lr" "--batch-size=$bs"
-    done
+for task in "${tasks[@]}"; do
+  for lr in "${learning_rates[@]}"; do
+      for bs in "${batch_sizes[@]}"; do
+          echo "Submitting job: $script --learning-rate $lr --batch-size $bs"
+          sbatch "$script" "--task=$task" "--learning-rate=$lr" "--batch-size=$bs"
+      done
+  done
 done
