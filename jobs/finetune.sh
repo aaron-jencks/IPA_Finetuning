@@ -29,7 +29,7 @@ scratch_github_prefix="$scratch_prefix/github"
 mkdir -pv $scratch_datasets_prefix $scratch_github_prefix $checkpoints_prefix
 
 repo_name="IPA_Finetuning"
-repo_address="git@github.com:aaron-jencks/$IPA_Finetuning.git"
+repo_address="git@github.com:aaron-jencks/$repo_name.git"
 repo_branch="trainer"
 repo_dir="$scratch_github_prefix/$repo_name"
 if [ ! -d "$repo_dir" ]; then
