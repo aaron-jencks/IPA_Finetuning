@@ -19,6 +19,6 @@ batch_sizes=(8 16 32 64 128)
 for lr in "${learning_rates[@]}"; do
     for bs in "${batch_sizes[@]}"; do
         echo "Submitting job: $script --learning-rate $lr --batch-size $bs"
-        sbatch "$script" --learning-rate "$lr" --batch-size "$bs"
+        sbatch "$script" "--learning-rate=$lr" "--batch-size=$bs"
     done
 done
