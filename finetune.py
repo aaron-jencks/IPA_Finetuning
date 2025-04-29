@@ -10,6 +10,7 @@ from transformers import (
     TrainingArguments,
     DataCollatorWithPadding,
 )
+import wandb
 
 from hf_wrapper import GPTForSequenceClassification
 from model import GPT, GPTConfig
@@ -63,7 +64,10 @@ if __name__ == "__main__":
     ap.add_argument('--log-dir', type=pathlib.Path, default=pathlib.Path('logs'))
     ap.add_argument('--log-interval', type=int, default=10)
     ap.add_argument('--device', type=str, default='cuda')
+    ap.add_argument('--wandb-project', type=str, default='ipa-finetune-english')
     args = ap.parse_args()
+
+    wandb.init(project=f'{args.wandb_project}-{args.task}', name=f'lr{args.learning_rate}-bs{args.batch_size}')
 
     eod_token = "<|endoftext|>"
 
@@ -134,6 +138,7 @@ if __name__ == "__main__":
         logging_dir=args.log_dir,
         logging_steps=args.log_interval,
         load_best_model_at_end=True,
+        report_to='wandb'
     )
 
     # ---- Trainer ----
