@@ -1,5 +1,6 @@
 import argparse
 import pathlib
+from typing import List
 
 from datasets import load_dataset, load_from_disk
 import evaluate
@@ -98,16 +99,20 @@ if __name__ == "__main__":
             raise Exception('can\'t load from disk with subset.')
         dataset = load_dataset(args.dataset, args.task, cache_dir=str(args.hf_cache_dir))
 
+    def flatten_multi_features(examples, features: List[str]) -> List[str]:
+        separator = f'\n\n{eod_token}\n\n'
+        return [separator.join(example) for example in zip(*[examples[f] for f in features])]
 
     # ---- Preprocessing ----
     def preprocess_function(examples):
-        feature = examples['sentence']
         if 'premise' in examples:
-            feature = examples['premise'] + eod_token + examples['hypothesis']
+            feature = flatten_multi_features(examples, ['premise', 'hypothesis'])
         elif 'question' in examples:
-            feature = examples['question'] + eod_token + examples['sentence']
+            feature = flatten_multi_features(examples, ['question', 'hypothesis'])
         elif 'sentence1' in examples:
-            feature = examples['sentence1'] + eod_token + examples['sentence2']
+            feature = flatten_multi_features(examples, ['sentence1', 'sentence2'])
+        else:
+            feature = examples['sentence']
 
         return tokenizer(feature, truncation=True, max_length=args.context_size)
 
