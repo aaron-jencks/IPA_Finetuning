@@ -52,7 +52,9 @@ if __name__ == "__main__":
                     choices=["sst2", "mrpc", "rte", "qnli", "qqp", "cola", "wnli", "stsb"])
     ap.add_argument('--output', type=pathlib.Path, required=True)
     ap.add_argument('--epochs', type=int, default=3)
+    ap.add_argument('--eval-interval', type=int, default=1000)
     ap.add_argument('--context-size', type=int, default=1024)
+    ap.add_argument('--learning-rate', type=float, default=2e-5)
     ap.add_argument('--batch-size', type=int, default=8)
     ap.add_argument('--hf-cache-dir', type=pathlib.Path, default=pathlib.Path('cache'))
     ap.add_argument('--dataset', type=str, default='nyu-mll/glue')
@@ -121,9 +123,10 @@ if __name__ == "__main__":
     # ---- Training arguments ----
     training_args = TrainingArguments(
         output_dir=args.output,
-        eval_strategy="epoch",
+        eval_strategy="steps",
+        eval_steps=args.eval_interval,
         save_strategy="epoch",
-        learning_rate=2e-5,
+        learning_rate=args.learning_rate,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
         num_train_epochs=args.epochs,
