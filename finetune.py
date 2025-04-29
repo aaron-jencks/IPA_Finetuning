@@ -64,6 +64,7 @@ if __name__ == "__main__":
     ap.add_argument('--log-interval', type=int, default=100)
     ap.add_argument('--device', type=str, default='cuda')
     ap.add_argument('--wandb-project', type=str, default='ipa-finetune-english')
+    ap.add_argument('--no-progress-bar', action='store_true')
     args = ap.parse_args()
 
     wandb.init(project=f'{args.wandb_project}-{args.task}', name=f'lr{args.learning_rate}-bs{args.batch_size}')
@@ -135,7 +136,8 @@ if __name__ == "__main__":
         num_train_epochs=args.epochs,
         weight_decay=0.01,
         logging_steps=args.log_interval,
-        report_to='wandb'
+        report_to='wandb',
+        disable_tqdm=True
     )
 
     # ---- Trainer ----

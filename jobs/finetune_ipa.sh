@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=ipa_finetune_sst2_ipa
+#SBATCH --job-name=ipa_finetune_sst2_english
 #SBATCH --account=PAS2836
 #SBATCH --output=/fs/ess/PAS2836/ipa_gpt/jobs/logs/%x-%j.out
 #SBATCH --error=/fs/ess/PAS2836/ipa_gpt/jobs/logs/errors/%x-%j.err
@@ -30,7 +30,7 @@ mkdir -pv $scratch_datasets_prefix $scratch_github_prefix $checkpoints_prefix
 
 repo_name="IPA_Finetuning"
 repo_address="git@github.com:aaron-jencks/$IPA_Finetuning.git"
-repo_branch="robust"
+repo_branch="trainer"
 repo_dir="$scratch_github_prefix/$repo_name"
 if [ ! -d "$repo_dir" ]; then
   cd "$scratch_github_prefix"
@@ -42,45 +42,51 @@ else
   git pull
 fi
 
-# Parse command line arguments for dataset
-if [ "$#" -ne 1 ]; then
-    echo "ERROR: Missing dataset argument"
-    echo "Usage: sbatch finetune.sh <dataset_name>"
-    exit 1
-fi
+task="sst2"
+learning_rate="2e-5"
+batch_size="8"
+for arg in "$@"; do
+  case $arg in
+    --task=*) task="${arg#*=}";;
+    --learning-rate=*) learning_rate="${arg#*=}";;
+    --batch-size=*) batch_size="${arg#*=}";;
+    *)
+      echo "unknown argument: $arg"
+      exit 1
+      ;;
+  esac
+done
 
-dataset_name="$1"
-echo "Dataset: $dataset_name"
+echo "Task: $task"
+echo "Learning rate: $learning_rate"
+echo "Batch size: $batch_size"
 
 # Script specific names
 model="openwebtext_ipa_multi_node_12_5"
-wandb_project="ipa_finetuning_sst2_ipa"
-parent_dataset="transcribed/glue-ipa"
-tokenizer_name="bpe-ipa-number-preservation"
+wandb_project="ipa-finetuning-ipa"
+dataset="transcribed/glue-ipa"
 
 checkpoint_path="$checkpoints_prefix/$model/ckpt.pt"
+tokenizer_name="bpe-ipa-number-preservation"
+output_name="$task-lr$learning_rate-bs$batch_size"
+output_path="$checkpoint_path/$output_name"
 
 # because it's a local dataset
-dataset_location="$datasets_prefix/$parent_dataset/$dataset_name"
-
-token_data_dir="$scratch_datasets_prefix/$wandb_project"
-mkdir -pv "$token_data_dir"
+dataset_location="$datasets_prefix/$dataset/$task"
 
 echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
 python finetune.py \
-  --dataset "$dataset_name" \
-  --parent_dataset "$dataset_location" --no_subset --from_disk \
-  --use_ipa \
-  --pretrained_ckpt_path "$checkpoint_path" \
-  --out_dir "$checkpoints_prefix" \
-  --tokenizer_dir "$tokenizers_prefix" \
-  --tokenizer_name "$tokenizer_name" \
-  --data_dir "$token_data_dir" \
-  --hf_cache "$datasets_prefix" \
-  --wandb_project "$wandb_project" \
-  --wandb_log
-
+  --vocab "$tokenizers_prefix/$tokenizer_name-vocab.json" \
+  --merges "$tokenizers_prefix/$tokenizer_name-merges.txt" \
+  --model "$checkpoint_path" \
+  --task "$task" \
+  --output "$output_path" \
+  --learning-rate "$learning_rate" \
+  --batch-size "$batch_size" \
+  --hf-cache-dir "$datasets_prefix" \
+  --dataset "$dataset_location" --no-subset --from-disk \
+  --wandb-project "$wandb_project"
 
 echo "===== [$(date)] JOB COMPLETED ====="
