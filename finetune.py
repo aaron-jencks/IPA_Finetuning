@@ -61,7 +61,6 @@ if __name__ == "__main__":
     ap.add_argument('--dataset', type=str, default='nyu-mll/glue')
     ap.add_argument('--from-disk', action='store_true')
     ap.add_argument('--no-subset', action='store_true')
-    ap.add_argument('--log-dir', type=pathlib.Path, default=pathlib.Path('logs'))
     ap.add_argument('--log-interval', type=int, default=100)
     ap.add_argument('--device', type=str, default='cuda')
     ap.add_argument('--wandb-project', type=str, default='ipa-finetune-english')
@@ -135,7 +134,6 @@ if __name__ == "__main__":
         per_device_eval_batch_size=args.batch_size,
         num_train_epochs=args.epochs,
         weight_decay=0.01,
-        logging_dir=args.log_dir,
         logging_steps=args.log_interval,
         report_to='wandb'
     )
