@@ -69,7 +69,7 @@ dataset="nyu-mll/glue"
 checkpoint_path="$checkpoints_prefix/$model/ckpt.pt"
 tokenizer_name="bpe-normal-number-preservation"
 output_name="$task-lr$learning_rate-bs$batch_size"
-output_path="$checkpoint_path/$output_name"
+output_path="$checkpoints_prefix/$output_name"
 
 echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
