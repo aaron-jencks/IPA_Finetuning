@@ -84,7 +84,7 @@ python finetune.py \
   --output "$output_path" \
   --learning-rate "$learning_rate" \
   --batch-size "$batch_size" \
-  --hf-cache-dir "$scratch_datasets_prefix" \
+  --hf-cache-dir "$scratch_datasets_prefix/$output_name" \
   --dataset "$dataset" \
   --wandb-project "$wandb_project"
 
