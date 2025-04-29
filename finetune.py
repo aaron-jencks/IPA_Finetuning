@@ -24,7 +24,6 @@ class_counts = {
     'qqp': 2,
     'rte': 2,
     'sst2': 2,
-    'stsb': 6,
     'wnli': 2,
 }
 
@@ -63,7 +62,7 @@ if __name__ == "__main__":
     ap.add_argument('--merges', type=pathlib.Path, required=True)
     ap.add_argument('--model', type=pathlib.Path, required=True)
     ap.add_argument('--task', type=str, required=True,
-                    choices=["ax", "sst2", "mrpc", "rte", "qnli", "qqp", "cola", "wnli", "stsb"])
+                    choices=["ax", "sst2", "mrpc", "rte", "qnli", "qqp", "cola", "wnli"])
     ap.add_argument('--output', type=pathlib.Path, required=True)
     ap.add_argument('--epochs', type=int, default=3)
     ap.add_argument('--eval-interval', type=int, default=500)
