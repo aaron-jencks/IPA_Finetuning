@@ -14,7 +14,7 @@ fi
 # Define grid
 learning_rates=(1e-5 2e-5 3e-5 5e-5)
 batch_sizes=(8 16 32 64 128)
-tasks=("ax" "sst2" "mrpc" "rte" "qnli" "qqp" "cola" "wnli" "stsb")
+tasks=("ax" "sst2" "mrpc" "rte" "qnli" "qqp" "cola" "wnli")
 
 # Loop over all combinations
 for task in "${tasks[@]}"; do
