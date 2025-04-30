@@ -27,7 +27,8 @@ tokenizers_prefix="$storage_prefix/tokenizers"
 scratch_datasets_prefix="$scratch_prefix/tokens"
 scratch_github_prefix="$scratch_prefix/github"
 scratch_checkpoints_prefix="$scratch_prefix/checkpoints"
-mkdir -pv $scratch_datasets_prefix $scratch_github_prefix $checkpoints_prefix
+scratch_hf_cache_prefix="$scratch_prefix/cache"
+mkdir -pv $scratch_datasets_prefix $scratch_github_prefix $checkpoints_prefix $scratch_hf_cache_prefix
 
 repo_name="IPA_Finetuning"
 repo_address="git@github.com:aaron-jencks/$repo_name.git"
@@ -71,7 +72,7 @@ checkpoint_path="$checkpoints_prefix/$model/ckpt.pt"
 tokenizer_name="bpe-ipa-number-preservation"
 output_name="$task/lr$learning_rate-bs$batch_size"
 output_path="$scratch_checkpoints_prefix/$output_name"
-mkdir -pv "$scratch_checkpoints_prefix/$task"
+mkdir -pv "$scratch_checkpoints_prefix/$task" "$scratch_hf_cache_prefix/$output_name"
 
 # because it's a local dataset
 dataset_location="$datasets_prefix/$dataset/$task"
@@ -87,7 +88,7 @@ python finetune.py \
   --output "$output_path" \
   --learning-rate "$learning_rate" \
   --batch-size "$batch_size" \
-  --hf-cache-dir "$scratch_datasets_prefix/$output_name" \
+  --hf-cache-dir "$scratch_hf_cache_prefix/$output_name" \
   --dataset "$dataset_location" --no-subset --from-disk \
   --wandb-project "$wandb_project"
 
