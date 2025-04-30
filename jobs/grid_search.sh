@@ -12,8 +12,8 @@ if [ -z "$script" ]; then
 fi
 
 # Define grid
-learning_rates=(1e-5 2e-5 3e-5 5e-5)
-batch_sizes=(8 16 32 64 128)
+learning_rates=(5e-6 1e-5 2e-5 3e-5 5e-5 5e-4)
+batch_sizes=(1 8 16 32 64 128)
 tasks=("sst2" "mrpc" "rte" "qnli" "qqp" "cola" "wnli")
 
 # Loop over all combinations
