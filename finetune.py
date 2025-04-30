@@ -140,6 +140,7 @@ if __name__ == "__main__":
         eval_strategy="steps",
         eval_steps=args.eval_interval,
         save_strategy="steps",
+        save_steps=args.eval_interval,
         save_total_limit=1,
         metric_for_best_model="accuracy",
         load_best_model_at_end=True,
