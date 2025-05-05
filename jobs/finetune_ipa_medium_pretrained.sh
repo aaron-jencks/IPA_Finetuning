@@ -70,7 +70,7 @@ dataset="transcribed/glue-ipa"
 tokenizer_name="bpe-ipa-number-preservation"
 output_name="$task/lr$learning_rate-bs$batch_size"
 output_path="$scratch_checkpoints_prefix/$output_name"
-mkdir -pv "$scratch_checkpoints_prefix/$task" "$scratch_hf_cache_prefix/$output_name"
+mkdir -pv "$scratch_checkpoints_prefix/$task" "$scratch_hf_cache_prefix/$output_name" "$output_path"
 
 # because it's a local dataset
 dataset_location="$datasets_prefix/$dataset/$task"

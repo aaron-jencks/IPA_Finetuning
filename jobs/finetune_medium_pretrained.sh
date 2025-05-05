@@ -70,7 +70,7 @@ dataset="nyu-mll/glue"
 tokenizer_name="bpe-normal-number-preservation"
 output_name="$task/lr$learning_rate-bs$batch_size"
 output_path="$scratch_checkpoints_prefix/$output_name"
-mkdir -pv "$scratch_checkpoints_prefix/$task" "$scratch_hf_cache_prefix/$output_name"
+mkdir -pv "$scratch_checkpoints_prefix/$task" "$scratch_hf_cache_prefix/$output_name" "$output_path"
 
 echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
