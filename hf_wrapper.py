@@ -11,10 +11,7 @@ class GPTForSequenceClassification(nn.Module):
         self.dropout_rate = pretrained_model.config.dropout
         self.hidden_size = pretrained_model.config.n_embd
 
-        self.layer_norm = nn.LayerNorm(self.hidden_size)
-
         self.classifier = nn.Sequential(
-            nn.Dropout(self.dropout_rate),
             nn.Linear(self.hidden_size, num_classes, bias=False)
         )
 
@@ -25,11 +22,7 @@ class GPTForSequenceClassification(nn.Module):
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
         hidden_states = self.pretrained_model(input_ids)  # (batch_size, seq_len, hidden_size)
 
-        pooled_output = hidden_states[:, -1, :]  # last token hidden state
-
-        pooled_output = self.layer_norm(pooled_output)  # extra stability
-
-        logits = self.classifier(pooled_output)
+        logits = self.classifier(hidden_states)
 
         loss = None
         if labels is not None:
