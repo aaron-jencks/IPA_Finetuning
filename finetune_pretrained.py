@@ -10,38 +10,9 @@ from transformers import (
     Trainer,
     TrainingArguments,
     DataCollatorWithPadding,
+    AutoModelForSequenceClassification,
 )
 import wandb
-
-from hf_wrapper import GPTForSequenceClassification
-from model import GPT, GPTConfig
-
-
-def load_pretrained_model(path: pathlib.Path, device: str = 'cuda') -> GPT:
-    # Load the pretrained model
-    print(f"Loading pretrained model from {path}")
-    checkpoint = torch.load(path, map_location=device)
-
-    # Create the nanoGPT instance to load in saved weights
-    gptconf = GPTConfig(**checkpoint['model_args'])
-    pretrained_model = GPT(gptconf)
-    state_dict = checkpoint['model']
-
-    # Clean up the saved state
-    unwanted_prefix = '_orig_mod.'
-    for k, v in list(state_dict.items()):
-        if k.startswith(unwanted_prefix):
-            state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
-
-    # Only load the parameters that match the checkpoint weights
-    model_dict = pretrained_model.state_dict()
-    filtered_state_dict = {k: v for k, v in state_dict.items()
-                           if k in model_dict and v.shape == model_dict[k].shape}
-    model_dict.update(filtered_state_dict)
-    pretrained_model.load_state_dict(model_dict)
-    pretrained_model.to(device)
-
-    return pretrained_model
 
 
 if __name__ == "__main__":
@@ -49,7 +20,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description='performs finetuning on a model on glue')
     ap.add_argument('--vocab', type=pathlib.Path, required=True)
     ap.add_argument('--merges', type=pathlib.Path, required=True)
-    ap.add_argument('--model', type=pathlib.Path, required=True)
     ap.add_argument('--task', type=str, required=True,
                     choices=["sst2", "mrpc", "rte", "qnli", "qqp", "cola", "wnli"])
     ap.add_argument('--output', type=pathlib.Path, required=True)
@@ -86,8 +56,7 @@ if __name__ == "__main__":
     tokenizer.padding_side = 'left'
 
     # ---- Load model ----
-    base_model = load_pretrained_model(args.model, args.device)
-    model = GPTForSequenceClassification(base_model)
+    model = AutoModelForSequenceClassification.from_pretrained('openai-community/gpt2-medium')
     model.resize_token_embeddings(len(tokenizer))
     model.config.pad_token_id = tokenizer.pad_token_id
     model.to(args.device)
@@ -156,7 +125,7 @@ if __name__ == "__main__":
         logging_steps=args.log_interval,
         report_to='wandb',
         disable_tqdm=True,
-        warmup_ratio=0.3  # also try 0.2 up to 0.3
+        warmup_ratio=0.1  # also try 0.2 up to 0.3
     )
 
     # ---- Trainer ----
