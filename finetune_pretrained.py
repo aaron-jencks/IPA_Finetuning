@@ -6,7 +6,6 @@ from datasets import load_dataset, load_from_disk
 import evaluate
 import torch
 from transformers import (
-    GPT2TokenizerFast,
     Trainer,
     TrainingArguments,
     DataCollatorWithPadding,
@@ -14,6 +13,7 @@ from transformers import (
 )
 import wandb
 
+from tokenizer import load_tokenizer, eod_token
 
 if __name__ == "__main__":
     # ---- Config ----
@@ -40,20 +40,8 @@ if __name__ == "__main__":
 
     wandb.init(project=f'{args.wandb_project}-{args.task}', name=f'lr{args.learning_rate}-bs{args.batch_size}')
 
-    eod_token = "<|endoftext|>"
-
-    # ---- Load tokenizer ----
-    tokenizer = GPT2TokenizerFast(
-        vocab_file=str(args.vocab),
-        merges_file=str(args.merges),
-        add_prefix_space=True,
-    )
-    tokenizer.add_special_tokens({'additional_special_tokens': [eod_token]})
-
-    # Set pad_token
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.padding_side = 'left'
+    # ---- Load Tokenizer ----
+    tokenizer = load_tokenizer(args.vocab, args.merges)
 
     # ---- Load model ----
     model = AutoModelForSequenceClassification.from_pretrained('openai-community/gpt2-medium')
