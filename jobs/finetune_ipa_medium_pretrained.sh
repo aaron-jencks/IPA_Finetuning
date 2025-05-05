@@ -64,11 +64,9 @@ echo "Learning rate: $learning_rate"
 echo "Batch size: $batch_size"
 
 # Script specific names
-model="openwebtext_ipa_multi_node_12_5_medium"
-wandb_project="ipa-finetuning-ipa-medium"
+wandb_project="ipa-finetuning-ipa-medium-pretrained"
 dataset="transcribed/glue-ipa"
 
-checkpoint_path="$checkpoints_prefix/$model/ckpt.pt"
 tokenizer_name="bpe-ipa-number-preservation"
 output_name="$task/lr$learning_rate-bs$batch_size"
 output_path="$scratch_checkpoints_prefix/$output_name"
