@@ -68,7 +68,7 @@ wandb_project="ipa-finetuning-ipa-medium-pretrained"
 dataset="transcribed/glue-ipa"
 
 tokenizer_name="bpe-ipa-number-preservation"
-output_name="$task/lr$learning_rate-bs$batch_size"
+output_name="$task-pretrained/lr$learning_rate-bs$batch_size"
 output_path="$scratch_checkpoints_prefix/$output_name"
 mkdir -pv "$scratch_checkpoints_prefix/$task" "$scratch_hf_cache_prefix/$output_name" "$output_path"
 
