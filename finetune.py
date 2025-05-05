@@ -14,7 +14,7 @@ import wandb
 
 from hf_wrapper import GPTForSequenceClassification
 from model import GPT, GPTConfig
-from tokenizer import load_tokenizer
+from tokenizer import load_tokenizer, eod_token
 
 
 def load_pretrained_model(path: pathlib.Path, device: str = 'cuda') -> GPT:
