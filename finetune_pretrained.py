@@ -47,6 +47,7 @@ if __name__ == "__main__":
     model = AutoModelForSequenceClassification.from_pretrained('openai-community/gpt2-medium')
     model.resize_token_embeddings(len(tokenizer))
     model.config.pad_token_id = tokenizer.pad_token_id
+    model.config.padding_side = tokenizer.padding_side
     model.to(args.device)
 
     # ---- Load dataset ----

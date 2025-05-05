@@ -77,6 +77,7 @@ if __name__ == "__main__":
     # ---- Load model ----
     base_model = load_pretrained_model(args.model, args.device)
     base_model.config.pad_token_id = tokenizer.pad_token_id
+    base_model.config.padding_side = tokenizer.padding_side
     model = GPTForSequenceClassification(base_model).to(args.device)
 
     # ---- Load dataset ----
