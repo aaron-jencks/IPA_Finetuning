@@ -22,7 +22,9 @@ class GPTForSequenceClassification(nn.Module):
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kwargs):
         hidden_states = self.pretrained_model(input_ids)  # (batch_size, seq_len, hidden_size)
 
-        logits = self.classifier(hidden_states)
+        pooled_output = hidden_states[:, -1, :]  # last token hidden state
+
+        logits = self.classifier(pooled_output)
 
         loss = None
         if labels is not None:
