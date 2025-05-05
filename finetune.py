@@ -87,10 +87,8 @@ if __name__ == "__main__":
 
     # ---- Load model ----
     base_model = load_pretrained_model(args.model, args.device)
-    model = GPTForSequenceClassification(base_model)
-    model.resize_token_embeddings(len(tokenizer))
-    model.config.pad_token_id = tokenizer.pad_token_id
-    model.to(args.device)
+    base_model.config.pad_token_id = tokenizer.pad_token_id
+    model = GPTForSequenceClassification(base_model).to(args.device)
 
     # ---- Load dataset ----
     if args.no_subset:
