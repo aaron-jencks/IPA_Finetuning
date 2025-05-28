@@ -15,8 +15,8 @@ def load_tokenizer(vocab: pathlib.Path, merges: pathlib.Path) -> GPT2TokenizerFa
     )
 
     # # Set pad_token
-    # if tokenizer.pad_token is None:
-    #     tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = 'right'
 
     return tokenizer
