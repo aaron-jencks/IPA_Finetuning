@@ -4,6 +4,7 @@ from typing import List
 
 from datasets import load_dataset, concatenate_datasets, ClassLabel
 import torch
+from tqdm import tqdm
 from transformers import Trainer, TrainingArguments, DataCollatorWithPadding
 from sklearn.metrics import precision_score, recall_score, f1_score
 import wandb
@@ -79,6 +80,9 @@ if __name__ == "__main__":
     dp.add_argument('--class-labels', type=str, nargs='+', default=['entailment', 'neutral', 'contradiction'], help='The class labels')
     args = ap.parse_args()
 
+    if args.no_bar:
+        tqdm.disable()
+
     CHECKPOINTS = {
         "ipa": args.checkpoint_prefix / f"{args.ipa_model}/ckpt.pt",
         "normal": args.checkpoint_prefix / f"{args.normal_model}/ckpt.pt",
@@ -126,7 +130,7 @@ if __name__ == "__main__":
             features = flatten_multi_features(examples, fields)
             return tokenizer(features, truncation=True, max_length=args.context_size)
 
-        return ds.map(preprocess, batched=True, disable_tqdm=args.no_bar)
+        return ds.map(preprocess, batched=True)
 
     # === Run both IPA and NORMAL models ===
     for model_type in ['ipa', 'normal']:
@@ -173,7 +177,6 @@ if __name__ == "__main__":
             weight_decay=0.01,
             logging_steps=1000,
             fp16=True,
-            disable_tqdm=args.no_bar,
             warmup_ratio=0.3,
             seed=args.random_seed,
             save_safetensors=False
