@@ -18,6 +18,19 @@ conda activate nanogpt_cu124  # TODO change this to your personal environment
 
 echo "Python: $(which python) ($(python --version))"
 
+train_lang="both"
+eval_lang="both"
+for arg in "$@"; do
+  case $arg in
+    --train-lang=*) train_lang="${arg#*=}";;
+    --eval-lang=*) eval_lang="${arg#*=}";;
+    *)
+      echo "unknown argument: $arg"
+      exit 1
+      ;;
+  esac
+done
+
 # setup paths
 scratch_prefix="/fs/scratch/PAS2836/ipa_gpt"
 scratch_github_prefix="$scratch_prefix/github"
@@ -47,6 +60,8 @@ TQDM_DISABLE=1 python finetuning-exp.py \
   rus pol \
   iggy12345/xnli-ru-ipa iggy12345/cdsc-e-ipa \
   --train-features premise hypothesis \
-  --eval-features sentence_A sentence_B
+  --eval-features sentence_A sentence_B \
+  --train-lang "$train_lang" \
+  --eval-lang "$eval_lang"
 
 echo "===== [$(date)] JOB COMPLETED ====="
