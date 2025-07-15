@@ -41,7 +41,7 @@ fi
 echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
-python finetune-exp.py \
+python finetuning-exp.py \
   russian_polish_ipa_12_5_50k russian_polish_normal_12_5_50k \
   bpe-rus-pol-ipa-number-preservation bpe-rus-pol-normal-number-preservation \
   rus pol \
