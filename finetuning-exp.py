@@ -70,7 +70,7 @@ if __name__ == "__main__":
     hp.add_argument('--learning-rate', type=float, default=2e-5, help='The learning rate of the model')
     hp.add_argument('--batch-size', type=int, default=16, help='The batch size of the model')
     hp.add_argument('--hf-cache', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/cache'), help='The huggingface cache folder')
-    hp.add_argument('--training-checkpoint-prefix', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/temp_checkpoints'), help='The prefix of the temporary checkpoints folder')
+    hp.add_argument('--training-checkpoint-prefix', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/checkpoints'), help='The prefix of the temporary checkpoints folder')
     dp = ap.add_argument_group('dataset')
     dp.add_argument('--train-features', type=str, nargs='+', required=True, help='The training features')
     dp.add_argument('--eval-features', type=str, nargs='+', required=True, help='The validation features')
