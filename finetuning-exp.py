@@ -1,4 +1,5 @@
 import argparse
+import os
 import pathlib
 from typing import List
 
@@ -125,7 +126,7 @@ if __name__ == "__main__":
             features = flatten_multi_features(examples, fields)
             return tokenizer(features, truncation=True, max_length=args.context_size)
 
-        return ds.map(preprocess, batched=True)
+        return ds.map(preprocess, batched=True, num_proc=os.cpu_count())
 
     # === Run both IPA and NORMAL models ===
     for model_type in ['ipa', 'normal']:
@@ -170,11 +171,12 @@ if __name__ == "__main__":
             per_device_eval_batch_size=args.batch_size,
             num_train_epochs=args.epochs,
             weight_decay=0.01,
-            logging_steps=1000,
+            logging_steps=100,
             fp16=True,
             warmup_ratio=0.3,
             seed=args.random_seed,
-            save_safetensors=False
+            save_safetensors=False,
+            disable_tqdm=True,
         )
 
         wandb.init(project=project_name, name=f'{model_type}-{args.train_lang}-{args.eval_lang}')
