@@ -55,6 +55,7 @@ echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
 TQDM_DISABLE=1 python finetuning-exp.py \
+  "$SLURM_JOB_ID" \
   russian_polish_ipa_12_5_50k russian_polish_normal_12_5_50k \
   bpe-rus-pol-ipa-number-preservation bpe-rus-pol-normal-number-preservation \
   rus pol \
