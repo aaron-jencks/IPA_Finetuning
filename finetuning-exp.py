@@ -179,7 +179,7 @@ if __name__ == "__main__":
             disable_tqdm=True,
         )
 
-        wandb.init(project=project_name, name=f'{model_type}-{args.train_lang}-{args.eval_lang}')
+        wrun = wandb.init(project=project_name, name=f'{model_type}-{args.train_lang}-{args.eval_lang}')
 
         trainer = Trainer(
             model=model,
@@ -197,3 +197,5 @@ if __name__ == "__main__":
         print(f"Final evaluation on {args.eval_lang.upper()} for model {model_type.upper()}")
         results = trainer.evaluate()
         print(results)
+
+        wrun.finish()
