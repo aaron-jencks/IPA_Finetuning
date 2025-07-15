@@ -61,7 +61,7 @@ TQDM_DISABLE=1 python finetuning-exp.py \
   iggy12345/xnli-ru-ipa iggy12345/cdsc-e-ipa \
   --train-features premise hypothesis \
   --eval-features sentence_A sentence_B \
-  --train-lang="$train_lang" \
-  --eval-lang="$eval_lang"
+  --train-lang "$train_lang" \
+  --eval-lang "$eval_lang"
 
 echo "===== [$(date)] JOB COMPLETED ====="
