@@ -64,6 +64,7 @@ if __name__ == "__main__":
     ap.add_argument('--tokenizer-prefix', type=pathlib.Path, default=pathlib.Path('/fs/ess/PAS2836/ipa_gpt/tokenizers'), help='the prefix of the tokenizers folder')
     ap.add_argument('--is-medium', action='store_true', help='indicates that the model is a medium model')
     ap.add_argument('--random-seed', type=int, default=42, help='random seed')
+    ap.add_argument('--no-bar', action='store_true', help='disables progress bars')
     hp = ap.add_argument_group('hyperparameters')
     hp.add_argument('--epochs', type=int, default=3, help='number of training epochs')
     hp.add_argument('--context-size', type=int, default=1024, help='The context size of the model')
@@ -125,7 +126,7 @@ if __name__ == "__main__":
             features = flatten_multi_features(examples, fields)
             return tokenizer(features, truncation=True, max_length=args.context_size)
 
-        return ds.map(preprocess, batched=True)
+        return ds.map(preprocess, batched=True, disable_tqdm=args.no_bar)
 
     # === Run both IPA and NORMAL models ===
     for model_type in ['ipa', 'normal']:
@@ -172,7 +173,7 @@ if __name__ == "__main__":
             weight_decay=0.01,
             logging_steps=1000,
             fp16=True,
-            disable_tqdm=False,
+            disable_tqdm=args.no_bar,
             warmup_ratio=0.3,
             seed=args.random_seed,
             save_safetensors=False

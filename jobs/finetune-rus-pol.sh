@@ -47,6 +47,7 @@ python finetuning-exp.py \
   rus pol \
   iggy12345/xnli-ru-ipa iggy12345/cdsc-e-ipa \
   --train-features premise hypothesis \
-  --eval-features sentence_A sentence_B
+  --eval-features sentence_A sentence_B \
+  --no-bar
 
 echo "===== [$(date)] JOB COMPLETED ====="
