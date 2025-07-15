@@ -4,7 +4,6 @@ from typing import List
 
 from datasets import load_dataset, concatenate_datasets, ClassLabel
 import torch
-from tqdm import tqdm
 from transformers import Trainer, TrainingArguments, DataCollatorWithPadding
 from sklearn.metrics import precision_score, recall_score, f1_score
 import wandb
@@ -65,7 +64,6 @@ if __name__ == "__main__":
     ap.add_argument('--tokenizer-prefix', type=pathlib.Path, default=pathlib.Path('/fs/ess/PAS2836/ipa_gpt/tokenizers'), help='the prefix of the tokenizers folder')
     ap.add_argument('--is-medium', action='store_true', help='indicates that the model is a medium model')
     ap.add_argument('--random-seed', type=int, default=42, help='random seed')
-    ap.add_argument('--no-bar', action='store_true', help='disables progress bars')
     hp = ap.add_argument_group('hyperparameters')
     hp.add_argument('--epochs', type=int, default=3, help='number of training epochs')
     hp.add_argument('--context-size', type=int, default=1024, help='The context size of the model')
@@ -79,9 +77,6 @@ if __name__ == "__main__":
     dp.add_argument('--num-classes', type=int, default=3, help='The number of classes')
     dp.add_argument('--class-labels', type=str, nargs='+', default=['entailment', 'neutral', 'contradiction'], help='The class labels')
     args = ap.parse_args()
-
-    if args.no_bar:
-        tqdm.disable()
 
     CHECKPOINTS = {
         "ipa": args.checkpoint_prefix / f"{args.ipa_model}/ckpt.pt",
