@@ -105,7 +105,7 @@ if __name__ == "__main__":
         for lang, features in zip(args.languages, [args.train_features, args.eval_features])
     }
 
-    project_name = f"{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-finetuning"
+    project_name = f"{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-{args.train_lang}-{args.eval_lang}-finetuning"
     temporary_output_dir = args.training_checkpoint_prefix / f"{project_name}-{args.train_lang}-{args.eval_lang}/"
     temporary_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -174,12 +174,11 @@ if __name__ == "__main__":
             logging_steps=100,
             fp16=True,
             warmup_ratio=0.3,
-            seed=args.random_seed,
             save_safetensors=False,
             disable_tqdm=True,
         )
 
-        wrun = wandb.init(project=project_name, name=f'{model_type}-{args.train_lang}-{args.eval_lang}')
+        wrun = wandb.init(entity='aaronjencks-the-ohio-state-university', project=project_name, name=f'{model_type}-{args.train_lang}-{args.eval_lang}')
 
         trainer = Trainer(
             model=model,
