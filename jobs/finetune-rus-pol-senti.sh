@@ -20,10 +20,12 @@ echo "Python: $(which python) ($(python --version))"
 
 train_lang="both"
 eval_lang="both"
+epochs=8
 for arg in "$@"; do
   case $arg in
     --train-lang=*) train_lang="${arg#*=}";;
     --eval-lang=*) eval_lang="${arg#*=}";;
+    --epochs=*) epochs="${arg#*=}";;
     *)
       echo "unknown argument: $arg"
       exit 1
@@ -65,6 +67,7 @@ TQDM_DISABLE=1 python finetuning-exp.py \
   --train-lang "$train_lang" \
   --eval-lang "$eval_lang" \
   --eval-feature five_class_label label \
-  --num-classes 5
+  --num-classes 5 \
+  --epochs "$epochs"
 
 echo "===== [$(date)] JOB COMPLETED ====="
