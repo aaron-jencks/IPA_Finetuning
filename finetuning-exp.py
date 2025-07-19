@@ -130,7 +130,7 @@ if __name__ == "__main__":
         def preprocess(examples):
             features = flatten_multi_features(examples, fields)
             encoded = tokenizer(features, truncation=True, max_length=args.context_size)
-            encoded['labels'] = examples[LANG_TO_LABELS[lang]]
+            encoded['label'] = examples[LANG_TO_LABELS[lang]]
             return encoded
 
         return ds.map(preprocess, batched=True, num_proc=os.cpu_count())
