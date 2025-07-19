@@ -64,7 +64,7 @@ TQDM_DISABLE=1 python finetuning-exp.py \
   --lang-2-features text \
   --train-lang "$train_lang" \
   --eval-lang "$eval_lang" \
-  --eval-feature five_class_label rating \
+  --eval-feature five_class_label label \
   --num-classes 5
 
 echo "===== [$(date)] JOB COMPLETED ====="
