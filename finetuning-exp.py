@@ -54,6 +54,7 @@ def compute_metrics(eval_pred):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('job_number', type=str, help='slurm job number')
+    ap.add_argument('task', type=str, help='the classification task used for wandb job name')
     ap.add_argument('ipa_model', type=str, help="Name of the ipa model")
     ap.add_argument('normal_model', type=str, help="Name of the normal model")
     ap.add_argument('ipa_tokenizer_prefix', type=str, help="Name of the ipa tokenizer prefix")
@@ -111,7 +112,7 @@ if __name__ == "__main__":
         for lang, label_feature in zip(args.languages, args.eval_feature)
     }
 
-    project_name = f"{args.job_number}-{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-{args.train_lang}-{args.eval_lang}-finetuning"
+    project_name = f"{args.job_number}-{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-{args.train_lang}-{args.eval_lang}-finetuning-{args.task}"
     temporary_output_dir = args.training_checkpoint_prefix / f"{project_name}-{args.train_lang}-{args.eval_lang}/"
     temporary_output_dir.mkdir(parents=True, exist_ok=True)
 

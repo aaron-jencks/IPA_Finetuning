@@ -55,7 +55,7 @@ echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
 TQDM_DISABLE=1 python finetuning-exp.py \
-  "$SLURM_JOB_ID" \
+  "$SLURM_JOB_ID" "xnli" \
   russian_polish_ipa_12_5_50k russian_polish_normal_12_5_50k \
   bpe-rus-pol-ipa-number-preservation bpe-rus-pol-normal-number-preservation \
   rus pol \
@@ -63,6 +63,7 @@ TQDM_DISABLE=1 python finetuning-exp.py \
   --lang-1-features premise hypothesis \
   --lang-2-features sentence_A sentence_B \
   --train-lang "$train_lang" \
-  --eval-lang "$eval_lang"
+  --eval-lang "$eval_lang" \
+  --eval-feature label label
 
 echo "===== [$(date)] JOB COMPLETED ====="
