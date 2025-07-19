@@ -74,10 +74,10 @@ if __name__ == "__main__":
     hp.add_argument('--hf-cache', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/cache'), help='The huggingface cache folder')
     hp.add_argument('--training-checkpoint-prefix', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/checkpoints'), help='The prefix of the temporary checkpoints folder')
     dp = ap.add_argument_group('dataset')
-    dp.add_argument('--train-features', type=str, nargs='+', required=True, help='The training features')
-    dp.add_argument('--eval-features', type=str, nargs='+', required=True, help='The validation features')
+    dp.add_argument('--lang-1-features', type=str, nargs='+', required=True, help='The training features of language 1')
+    dp.add_argument('--lang-2-features', type=str, nargs='+', required=True, help='The training features of language 2')
+    dp.add_argument('--eval-feature', type=str, nargs='+', required=True, help='The validation feature for each dataset')
     dp.add_argument('--num-classes', type=int, default=3, help='The number of classes')
-    dp.add_argument('--class-labels', type=str, nargs='+', default=['entailment', 'neutral', 'contradiction'], help='The class labels')
     args = ap.parse_args()
 
     CHECKPOINTS = {
@@ -103,7 +103,12 @@ if __name__ == "__main__":
 
     LANG_TO_FEATURES = {
         lang: features
-        for lang, features in zip(args.languages, [args.train_features, args.eval_features])
+        for lang, features in zip(args.languages, [args.lang_1_features, args.lang_2_features])
+    }
+
+    LANG_TO_LABELS = {
+        lang: label_feature
+        for lang, label_feature in zip(args.languages, args.eval_feature)
     }
 
     project_name = f"{args.job_number}-{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-{args.train_lang}-{args.eval_lang}-finetuning"
@@ -119,13 +124,13 @@ if __name__ == "__main__":
     def load_and_preprocess(lang, split, tokenizer, model_type, cache):
         dataset_name = LANG_TO_DATASET[lang]
         ds = load_dataset(dataset_name, split=split, cache_dir=str(cache))
-        if 'label' in ds.features and not isinstance(ds.features['label'], ClassLabel):
-            ds = ds.cast_column("label", ClassLabel(names=args.class_labels))
         fields = get_fields(lang, model_type)
 
         def preprocess(examples):
             features = flatten_multi_features(examples, fields)
-            return tokenizer(features, truncation=True, max_length=args.context_size)
+            encoded = tokenizer(features, truncation=True, max_length=args.context_size)
+            encoded['labels'] = examples[LANG_TO_LABELS[lang]]
+            return encoded
 
         return ds.map(preprocess, batched=True, num_proc=os.cpu_count())
 

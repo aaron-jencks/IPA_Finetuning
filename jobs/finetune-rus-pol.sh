@@ -60,8 +60,8 @@ TQDM_DISABLE=1 python finetuning-exp.py \
   bpe-rus-pol-ipa-number-preservation bpe-rus-pol-normal-number-preservation \
   rus pol \
   iggy12345/xnli-ru-ipa iggy12345/cdsc-e-ipa \
-  --train-features premise hypothesis \
-  --eval-features sentence_A sentence_B \
+  --lang-1-features premise hypothesis \
+  --lang-2-features sentence_A sentence_B \
   --train-lang "$train_lang" \
   --eval-lang "$eval_lang"
 
