@@ -30,8 +30,8 @@ def load_random_from_pretrained_model(path: pathlib.Path, device: str = 'cuda') 
     return model.to(device)
 
 
-def flatten_multi_features(examples, features: List[str]) -> List[str]:
-    sep = f'\n\n{eod_token}\n\n'
+def flatten_multi_features(examples, features: List[str], sequence_token: str = eod_token) -> List[str]:
+    sep = f'\n\n{sequence_token}\n\n'
     return [sep.join([x or '' for x in items]) for items in zip(*[examples[f] for f in features])]
 
 
