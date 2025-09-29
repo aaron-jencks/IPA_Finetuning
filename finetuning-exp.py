@@ -122,7 +122,7 @@ if __name__ == "__main__":
         if args.train_lang == 'both':
             datasets = [
                 lam_load_and_preprocess(lang, LANG_TO_TRAIN_SPLITS[lang])
-                for lang in args.langugages
+                for lang in args.languages
             ]
             train_dataset = concatenate_datasets(datasets).shuffle(seed=args.random_seed)
         else:
