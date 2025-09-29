@@ -3,7 +3,7 @@ import os
 import pathlib
 
 from datasets import load_dataset, concatenate_datasets
-from transformers import Trainer, TrainingArguments, DataCollatorWithPadding
+from transformers import Trainer, TrainingArguments, DataCollatorWithPadding, SchedulerType
 import wandb
 
 from hf_wrapper import GPTForSequenceClassification
@@ -38,6 +38,8 @@ if __name__ == "__main__":
     dp.add_argument('--lang-2-features', type=str, nargs='+', required=True, help='The training features of language 2')
     dp.add_argument('--eval-feature', type=str, nargs='+', required=True, help='The validation feature for each dataset')
     dp.add_argument('--num-classes', type=int, default=3, help='The number of classes')
+    dp.add_argument('--lang-1-splits', type=str, nargs=2, default=['train', 'validation'], help='The splits of language 1, must be "train eval"')
+    dp.add_argument('--lang-2-splits', type=str, nargs=2, default=['train', 'validation'], help='The splits of language 2, must be "train eval"')
     args = ap.parse_args()
 
     CHECKPOINTS = {
@@ -71,6 +73,16 @@ if __name__ == "__main__":
         for lang, label_feature in zip(args.languages, args.eval_feature)
     }
 
+    LANG_TO_TRAIN_SPLITS = {
+        lang: splits[0]
+        for lang, splits in zip(args.languages, [args.lang_1_splits, args.lang_2_splits])
+    }
+
+    LANG_TO_TEST_SPLITS = {
+        lang: splits[1]
+        for lang, splits in zip(args.languages, [args.lang_1_splits, args.lang_2_splits])
+    }
+
     project_name = f"{args.job_number}-{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-{args.train_lang}-{args.eval_lang}-finetuning-{args.task}"
     temporary_output_dir = args.training_checkpoint_prefix / f"{project_name}-{args.train_lang}-{args.eval_lang}/"
     temporary_output_dir.mkdir(parents=True, exist_ok=True)
@@ -98,6 +110,7 @@ if __name__ == "__main__":
     for model_type in ['ipa', 'normal']:
         print(f"\n🔧 Running setup for {model_type.upper()} model")
         vocab_path, merges_path = TOKENIZERS[model_type]
+        print(f'loading tokenizer from {vocab_path} and {merges_path}')
         tokenizer = load_tokenizer(vocab_path, merges_path)
         base_model = load_pretrained_model(CHECKPOINTS[model_type], 'cuda')
         base_model.config.pad_token_id = tokenizer.pad_token_id
@@ -108,21 +121,21 @@ if __name__ == "__main__":
 
         if args.train_lang == 'both':
             datasets = [
-                lam_load_and_preprocess(lang, 'train')
-                for lang in args.languages
+                lam_load_and_preprocess(lang, LANG_TO_TRAIN_SPLITS[lang])
+                for lang in args.langugages
             ]
             train_dataset = concatenate_datasets(datasets).shuffle(seed=args.random_seed)
         else:
-            train_dataset = lam_load_and_preprocess(args.train_lang, 'train')
+            train_dataset = lam_load_and_preprocess(args.train_lang, LANG_TO_TRAIN_SPLITS[args.train_lang])
 
         if args.eval_lang == 'both':
             datasets = [
-                lam_load_and_preprocess(lang, 'validation')
+                lam_load_and_preprocess(lang, LANG_TO_TEST_SPLITS[lang])
                 for lang in args.languages
             ]
             eval_dataset = concatenate_datasets(datasets).shuffle(seed=args.random_seed)
         else:
-            eval_dataset = lam_load_and_preprocess(args.eval_lang, 'validation')   #change to pl[20%] when required
+            eval_dataset = lam_load_and_preprocess(args.eval_lang, LANG_TO_TEST_SPLITS[args.eval_lang])   #change to pl[20%] when required
 
         training_args = TrainingArguments(
             eval_strategy="steps",
@@ -130,9 +143,10 @@ if __name__ == "__main__":
             output_dir=str(temporary_output_dir),
             save_strategy='steps',
             save_steps=1000,
-            metric_for_best_model="precision",
+            metric_for_best_model="loss",
             load_best_model_at_end=True,
             learning_rate=args.learning_rate,
+            # lr_scheduler_type=SchedulerType.COSINE,
             per_device_train_batch_size=args.batch_size,
             per_device_eval_batch_size=args.batch_size,
             num_train_epochs=args.epochs,
