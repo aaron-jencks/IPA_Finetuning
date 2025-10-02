@@ -161,7 +161,16 @@ if __name__ == "__main__":
             disable_tqdm=True,
         )
 
-        wrun = wandb.init(entity='aaronjencks-the-ohio-state-university', project=project_name, name=f'{model_type}-{args.train_lang}-{args.eval_lang}')
+        wrun = wandb.init(
+          entity='aaronjencks-the-ohio-state-university', 
+          project=project_name, 
+          name=f'{model_type}-{args.train_lang}-{args.eval_lang}',
+          config={
+            'learning_rate': args.learning_rate,
+            'batch_size': args.batch_size,
+            'epochs': args.epochs,
+            'warmup_ratio': args.warmup_ratio
+        )
 
         trainer = Trainer(
             model=model,

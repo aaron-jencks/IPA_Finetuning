@@ -23,6 +23,7 @@ eval_lang="both"
 epochs=8
 learning_rate="1e-5"
 warmup=0.05
+batch_size=16
 for arg in "$@"; do
   case $arg in
     --train-lang=*) train_lang="${arg#*=}";;
@@ -30,6 +31,7 @@ for arg in "$@"; do
     --epochs=*) epochs="${arg#*=}";;
     --learning-rate=*) learning_rate="${arg#*=}";;
     --warmup=*) warmup="${arg#*=}";;
+    --batch-size=*) batch_size="${arg#*=}";;
     *)
       echo "unknown argument: $arg"
       exit 1
@@ -72,6 +74,7 @@ TQDM_DISABLE=1 python finetuning-exp.py \
   --eval-lang "$eval_lang" \
   --learning-rate "$learning_rate" \
   --warmup-ratio "$warmup" \
+  --batch-size "$batch_size" \
   --eval-feature five_class_label label \
   --num-classes 5 \
   --epochs "$epochs"
