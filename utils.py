@@ -46,7 +46,7 @@ def compute_metrics(eval_pred):
 
     return {
         "accuracy": accuracy,
-        "precision": precision_score(labels, preds, average="weighted", zero_division=0),
-        "recall": recall_score(labels, preds, average="weighted", zero_division=0),
-        "f1": f1_score(labels, preds, average="weighted", zero_division=0)
+        "precision": precision_score(labels, preds, average="macro", zero_division=0),
+        "recall": recall_score(labels, preds, average="macro", zero_division=0),
+        "f1": f1_score(labels, preds, average="macro", zero_division=0)
     }
