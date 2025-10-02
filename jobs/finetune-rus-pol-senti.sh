@@ -19,7 +19,6 @@ conda activate nanogpt_cu124  # TODO change this to your personal environment
 echo "Python: $(which python) ($(python --version))"
 
 train_lang="both"
-eval_lang="both"
 epochs=8
 learning_rate="1e-5"
 warmup=0.05
@@ -27,7 +26,6 @@ batch_size=16
 for arg in "$@"; do
   case $arg in
     --train-lang=*) train_lang="${arg#*=}";;
-    --eval-lang=*) eval_lang="${arg#*=}";;
     --epochs=*) epochs="${arg#*=}";;
     --learning-rate=*) learning_rate="${arg#*=}";;
     --warmup=*) warmup="${arg#*=}";;
@@ -71,7 +69,6 @@ TQDM_DISABLE=1 python finetuning-exp.py \
   --lang-1-features review \
   --lang-2-features text \
   --train-lang "$train_lang" \
-  --eval-lang "$eval_lang" \
   --learning-rate "$learning_rate" \
   --warmup-ratio "$warmup" \
   --batch-size "$batch_size" \

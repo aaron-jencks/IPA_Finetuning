@@ -21,7 +21,6 @@ if __name__ == "__main__":
     ap.add_argument('languages', type=str, nargs=2, help="List of languages")
     ap.add_argument('language_datasets', type=str, nargs=2, help="Language datasets")
     ap.add_argument('--train-lang', type=str, default='both', help='The training language')
-    ap.add_argument('--eval-lang', type=str, default='both', help='The evaluation language')
     ap.add_argument('--checkpoint-prefix', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/checkpoints'), help='the prefix of the checkpoints folder')
     ap.add_argument('--tokenizer-prefix', type=pathlib.Path, default=pathlib.Path('/fs/ess/PAS2836/ipa_gpt/tokenizers'), help='the prefix of the tokenizers folder')
     ap.add_argument('--is-medium', action='store_true', help='indicates that the model is a medium model')
@@ -129,14 +128,20 @@ if __name__ == "__main__":
         else:
             train_dataset = lam_load_and_preprocess(args.train_lang, LANG_TO_TRAIN_SPLITS[args.train_lang])
 
-        if args.eval_lang == 'both':
-            datasets = [
-                lam_load_and_preprocess(lang, LANG_TO_TEST_SPLITS[lang])
-                for lang in args.languages
-            ]
-            eval_dataset = concatenate_datasets(datasets).shuffle(seed=args.random_seed)
-        else:
-            eval_dataset = lam_load_and_preprocess(args.eval_lang, LANG_TO_TEST_SPLITS[args.eval_lang])   #change to pl[20%] when required
+        datasets = [
+            lam_load_and_preprocess(lang, LANG_TO_TEST_SPLITS[lang])
+            for lang in args.languages
+        ]
+        eval_dataset = concatenate_datasets(datasets).shuffle(seed=args.random_seed)
+
+        # if args.eval_lang == 'both':
+        #    datasets = [
+        #        lam_load_and_preprocess(lang, LANG_TO_TEST_SPLITS[lang])
+        #        for lang in args.languages
+        #    ]
+        #    eval_dataset = concatenate_datasets(datasets).shuffle(seed=args.random_seed)
+        #else:
+        #    eval_dataset = lam_load_and_preprocess(args.eval_lang, LANG_TO_TEST_SPLITS[args.eval_lang])   #change to pl[20%] when required
 
         training_args = TrainingArguments(
             eval_strategy="steps",
@@ -189,5 +194,14 @@ if __name__ == "__main__":
         print(f"Final evaluation on {args.eval_lang.upper()} for model {model_type.upper()}")
         results = trainer.evaluate()
         print(results)
+
+        for eval_lang in args.languages:
+            eval_dataset = lam_load_and_preprocess(eval_lang, LANG_TO_TEST_SPLITS[eval_lang])
+            lang_results = trainer.evaluate(
+                eval_dataset=eval_dataset,
+                metric_key_prefix=f'eval_{eval_lang}',
+            )
+            print(f'Evaluation for {eval_lang}:')
+            print(lang_results)
 
         wrun.finish()
