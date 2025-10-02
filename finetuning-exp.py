@@ -152,6 +152,7 @@ if __name__ == "__main__":
             per_device_eval_batch_size=args.batch_size,
             num_train_epochs=args.epochs,
             weight_decay=0.01,
+            max_grad_norm=1.0,  # gradient clipping
             logging_steps=100,
             fp16=True,
             warmup_ratio=0.3,
