@@ -30,6 +30,7 @@ if __name__ == "__main__":
     hp.add_argument('--epochs', type=int, default=3, help='number of training epochs')
     hp.add_argument('--context-size', type=int, default=1024, help='The context size of the model')
     hp.add_argument('--learning-rate', type=float, default=1e-5, help='The learning rate of the model')
+    hp.add_argument('--warmup-ratio', type=float, default=0.05, help='The warmup ratio to use')
     hp.add_argument('--batch-size', type=int, default=16, help='The batch size of the model')
     hp.add_argument('--hf-cache', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/cache'), help='The huggingface cache folder')
     hp.add_argument('--training-checkpoint-prefix', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/checkpoints'), help='The prefix of the temporary checkpoints folder')
@@ -155,7 +156,7 @@ if __name__ == "__main__":
             max_grad_norm=1.0,  # gradient clipping
             logging_steps=100,
             fp16=True,
-            warmup_ratio=0.1,
+            warmup_ratio=args.warmup_ratio,
             save_safetensors=False,
             disable_tqdm=True,
         )
