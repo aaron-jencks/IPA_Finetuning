@@ -143,7 +143,8 @@ if __name__ == "__main__":
             output_dir=str(temporary_output_dir),
             save_strategy='steps',
             save_steps=1000,
-            metric_for_best_model="loss",
+            metric_for_best_model="f1",
+            greater_is_better=True,  # Remember to update this if you update the metric used
             load_best_model_at_end=True,
             learning_rate=args.learning_rate,
             # lr_scheduler_type=SchedulerType.COSINE,
