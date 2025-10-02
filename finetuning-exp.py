@@ -170,6 +170,7 @@ if __name__ == "__main__":
             'batch_size': args.batch_size,
             'epochs': args.epochs,
             'warmup_ratio': args.warmup_ratio
+          }
         )
 
         trainer = Trainer(
