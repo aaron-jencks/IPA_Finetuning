@@ -140,10 +140,10 @@ if __name__ == "__main__":
 
         training_args = TrainingArguments(
             eval_strategy="steps",
-            eval_steps=1000,
+            eval_steps=0.01,
             output_dir=str(temporary_output_dir),
             save_strategy='steps',
-            save_steps=1000,
+            save_steps=0.01,
             metric_for_best_model="f1",
             greater_is_better=True,  # Remember to update this if you update the metric used
             load_best_model_at_end=True,
