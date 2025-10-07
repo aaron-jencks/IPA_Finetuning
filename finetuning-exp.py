@@ -169,7 +169,7 @@ if __name__ == "__main__":
         wrun = wandb.init(
           entity='aaronjencks-the-ohio-state-university', 
           project=project_name, 
-          name=f'{model_type}-{args.train_lang}-{args.eval_lang}',
+          name=f'{model_type}-{args.train_lang}-both',
           config={
             'learning_rate': args.learning_rate,
             'batch_size': args.batch_size,
@@ -188,7 +188,7 @@ if __name__ == "__main__":
             compute_metrics=compute_metrics,
         )
 
-        print(f"Training {model_type.upper()} model on {args.train_lang.upper()} → Evaluating on {args.eval_lang.upper()}")
+        print(f"Training {model_type.upper()} model on {args.train_lang.upper()} → Evaluating on BOTH")
         trainer.train()
 
         print(f"Final evaluation on {args.eval_lang.upper()} for model {model_type.upper()}")
