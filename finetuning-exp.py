@@ -83,7 +83,7 @@ if __name__ == "__main__":
         for lang, splits in zip(args.languages, [args.lang_1_splits, args.lang_2_splits])
     }
 
-    project_name = f"{args.job_number}-{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-{args.train_lang}-{args.eval_lang}-finetuning-{args.task}"
+    project_name = f"{args.job_number}-{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-{args.train_lang}-both-finetuning-{args.task}"
     temporary_output_dir = args.training_checkpoint_prefix / f"{project_name}-{args.train_lang}-{args.eval_lang}/"
     temporary_output_dir.mkdir(parents=True, exist_ok=True)
 
