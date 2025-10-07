@@ -65,15 +65,15 @@ TQDM_DISABLE=1 python finetuning-exp.py \
   russian_polish_ipa_12_5_50k russian_polish_normal_12_5_50k \
   bpe-rus-pol-ipa-number-preservation bpe-rus-pol-normal-number-preservation \
   rus pol \
-  iggy12345/brfrd-ipa iggy12345/allegro-reviews-ipa \
-  --lang-1-features review \
+  iggy12345/ru-reviews-classification-ipa iggy12345/allegro-reviews-ipa \
+  --lang-1-features text \
   --lang-2-features text \
   --train-lang "$train_lang" \
   --learning-rate "$learning_rate" \
   --warmup-ratio "$warmup" \
   --batch-size "$batch_size" \
-  --eval-feature five_class_label label \
-  --num-classes 5 \
+  --eval-feature adjusted_label binary_label \
+  --num-classes 3 \
   --epochs "$epochs"
 
 echo "===== [$(date)] JOB COMPLETED ====="
