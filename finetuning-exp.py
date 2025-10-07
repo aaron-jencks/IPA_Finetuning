@@ -200,7 +200,7 @@ if __name__ == "__main__":
         print(f"Training {model_type.upper()} model on {args.train_lang.upper()} → Evaluating on {args.train_lang.upper()}")
         trainer.train()
 
-        print(f"Final evaluation on {args.eval_lang.upper()} for model {model_type.upper()}")
+        print(f"Final evaluation on {args.train_lang.upper()} for model {model_type.upper()}")
         results = trainer.evaluate()
         print(results)
 
