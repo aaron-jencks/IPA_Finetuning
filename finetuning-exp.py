@@ -88,7 +88,7 @@ if __name__ == "__main__":
         for lang, splits in zip(args.languages, [args.lang_1_splits, args.lang_2_splits])
     }
 
-    project_name = f"{args.job_number}-{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-{args.train_lang}-both-finetuning-{args.task}"
+    project_name = f"{args.job_number}-{'-'.join(args.languages)}{'-medium' if args.is_medium else '-small'}-{args.train_lang}-{args.train_lang}-finetuning-{args.task}"
     temporary_output_dir = args.training_checkpoint_prefix / f"{project_name}-{args.train_lang}-both/"
     temporary_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -133,11 +133,14 @@ if __name__ == "__main__":
         else:
             train_dataset = lam_load_and_preprocess(args.train_lang, LANG_TO_TRAIN_SPLITS[args.train_lang])
 
-        datasets = [
-            lam_load_and_preprocess(lang, LANG_TO_TEST_SPLITS[lang])
-            for lang in args.languages
-        ]
-        eval_dataset = concatenate_datasets(datasets).shuffle(seed=args.random_seed)
+        if args.train_lang == 'both':
+            datasets = [
+                lam_load_and_preprocess(lang, LANG_TO_TEST_SPLITS[lang])
+                for lang in args.languages
+            ]
+            eval_dataset = concatenate_datasets(datasets).shuffle(seed=args.random_seed)
+        else:
+            eval_dataset = lam_load_and_preprocess(args.train_lang, LANG_TO_TEST_SPLITS[args.train_lang])
 
         # if args.eval_lang == 'both':
         #    datasets = [
@@ -175,7 +178,7 @@ if __name__ == "__main__":
         wrun = wandb.init(
           entity='aaronjencks-the-ohio-state-university', 
           project=project_name, 
-          name=f'{model_type}-{args.train_lang}-both',
+          name=f'{model_type}-{args.train_lang}-{args.train_lang}',
           config={
             'learning_rate': args.learning_rate,
             'batch_size': args.batch_size,
@@ -194,20 +197,21 @@ if __name__ == "__main__":
             compute_metrics=compute_metrics,
         )
 
-        print(f"Training {model_type.upper()} model on {args.train_lang.upper()} → Evaluating on BOTH")
+        print(f"Training {model_type.upper()} model on {args.train_lang.upper()} → Evaluating on {args.train_lang.upper()}")
         trainer.train()
 
         print(f"Final evaluation on {args.eval_lang.upper()} for model {model_type.upper()}")
         results = trainer.evaluate()
         print(results)
 
-        for eval_lang in args.languages:
-            eval_dataset = lam_load_and_preprocess(eval_lang, LANG_TO_TEST_SPLITS[eval_lang])
-            lang_results = trainer.evaluate(
-                eval_dataset=eval_dataset,
-                metric_key_prefix=f'eval_{eval_lang}',
-            )
-            print(f'Evaluation for {eval_lang}:')
-            print(lang_results)
+        if args.train_lang == 'both':
+            for eval_lang in args.languages:
+                eval_dataset = lam_load_and_preprocess(eval_lang, LANG_TO_TEST_SPLITS[eval_lang])
+                lang_results = trainer.evaluate(
+                    eval_dataset=eval_dataset,
+                    metric_key_prefix=f'eval_{eval_lang}',
+                )
+                print(f'Evaluation for {eval_lang}:')
+                print(lang_results)
 
         wrun.finish()
