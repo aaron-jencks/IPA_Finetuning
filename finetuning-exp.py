@@ -3,6 +3,7 @@ import os
 import pathlib
 
 from datasets import load_dataset, concatenate_datasets
+import torch
 from transformers import Trainer, TrainingArguments, DataCollatorWithPadding, SchedulerType
 import wandb
 
@@ -25,6 +26,7 @@ if __name__ == "__main__":
     ap.add_argument('--tokenizer-prefix', type=pathlib.Path, default=pathlib.Path('/fs/ess/PAS2836/ipa_gpt/tokenizers'), help='the prefix of the tokenizers folder')
     ap.add_argument('--is-medium', action='store_true', help='indicates that the model is a medium model')
     ap.add_argument('--random-seed', type=int, default=42, help='random seed')
+    ap.add_argument('--force-cpu', action='store_true', help='force cpu only')
     hp = ap.add_argument_group('hyperparameters')
     hp.add_argument('--epochs', type=int, default=3, help='number of training epochs')
     hp.add_argument('--context-size', type=int, default=1024, help='The context size of the model')
@@ -41,6 +43,8 @@ if __name__ == "__main__":
     dp.add_argument('--lang-1-splits', type=str, nargs=2, default=['train', 'validation'], help='The splits of language 1, must be "train eval"')
     dp.add_argument('--lang-2-splits', type=str, nargs=2, default=['train', 'validation'], help='The splits of language 2, must be "train eval"')
     args = ap.parse_args()
+
+    device = 'cpu' if not torch.cuda.is_available() or args.force_cpu else 'cuda'
 
     CHECKPOINTS = {
         "ipa": args.checkpoint_prefix / f"{args.ipa_model}/ckpt.pt",
@@ -112,10 +116,10 @@ if __name__ == "__main__":
         vocab_path, merges_path = TOKENIZERS[model_type]
         print(f'loading tokenizer from {vocab_path} and {merges_path}')
         tokenizer = load_tokenizer(vocab_path, merges_path)
-        base_model = load_pretrained_model(CHECKPOINTS[model_type], 'cuda')
+        base_model = load_pretrained_model(CHECKPOINTS[model_type], device)
         base_model.config.pad_token_id = tokenizer.pad_token_id
         base_model.config.padding_side = tokenizer.padding_side
-        model = GPTForSequenceClassification(base_model, num_classes=args.num_classes).to('cuda')
+        model = GPTForSequenceClassification(base_model, num_classes=args.num_classes).to(device)
 
         lam_load_and_preprocess = lambda l, s: load_and_preprocess(l, s, tokenizer, model_type, cache=args.hf_cache)
 
