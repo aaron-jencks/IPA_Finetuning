@@ -45,6 +45,7 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     device = 'cpu' if not torch.cuda.is_available() or args.force_cpu else 'cuda'
+    print('Using device:', device)
 
     CHECKPOINTS = {
         "ipa": args.checkpoint_prefix / f"{args.ipa_model}/ckpt.pt",
@@ -112,7 +113,7 @@ if __name__ == "__main__":
 
     # === Run both IPA and NORMAL models ===
     for model_type in ['ipa', 'normal']:
-        print(f"\n🔧 Running setup for {model_type.upper()} model")
+        print(f"🔧 Running setup for {model_type.upper()} model")
         vocab_path, merges_path = TOKENIZERS[model_type]
         print(f'loading tokenizer from {vocab_path} and {merges_path}')
         tokenizer = load_tokenizer(vocab_path, merges_path)
@@ -168,6 +169,7 @@ if __name__ == "__main__":
             warmup_ratio=args.warmup_ratio,
             save_safetensors=False,
             disable_tqdm=True,
+            no_cuda=args.force_cpu,
         )
 
         wrun = wandb.init(
