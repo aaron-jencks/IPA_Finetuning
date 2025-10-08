@@ -9,39 +9,18 @@ import wandb
 
 from hf_wrapper import GPTForSequenceClassification
 from tokenizer import load_tokenizer
+import utils
 from utils import flatten_multi_features, load_pretrained_model, compute_metrics
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument('job_number', type=str, help='slurm job number')
-    ap.add_argument('task', type=str, help='the classification task used for wandb job name')
-    ap.add_argument('ipa_model', type=str, help="Name of the ipa model")
-    ap.add_argument('normal_model', type=str, help="Name of the normal model")
-    ap.add_argument('ipa_tokenizer_prefix', type=str, help="Name of the ipa tokenizer prefix")
-    ap.add_argument('normal_tokenizer_prefix', type=str, help="Name of the normal tokenizer prefix")
-    ap.add_argument('languages', type=str, nargs=2, help="List of languages")
-    ap.add_argument('language_datasets', type=str, nargs=2, help="Language datasets")
-    ap.add_argument('--train-lang', type=str, default='both', help='The training language')
-    ap.add_argument('--checkpoint-prefix', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/checkpoints'), help='the prefix of the checkpoints folder')
-    ap.add_argument('--tokenizer-prefix', type=pathlib.Path, default=pathlib.Path('/fs/ess/PAS2836/ipa_gpt/tokenizers'), help='the prefix of the tokenizers folder')
-    ap.add_argument('--is-medium', action='store_true', help='indicates that the model is a medium model')
-    ap.add_argument('--random-seed', type=int, default=42, help='random seed')
-    ap.add_argument('--force-cpu', action='store_true', help='force cpu only')
+    ap = utils.setup_default_args(ap)
     hp = ap.add_argument_group('hyperparameters')
     hp.add_argument('--epochs', type=int, default=3, help='number of training epochs')
-    hp.add_argument('--context-size', type=int, default=1024, help='The context size of the model')
     hp.add_argument('--learning-rate', type=float, default=1e-5, help='The learning rate of the model')
     hp.add_argument('--warmup-ratio', type=float, default=0.05, help='The warmup ratio to use')
     hp.add_argument('--batch-size', type=int, default=16, help='The batch size of the model')
-    hp.add_argument('--hf-cache', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/cache'), help='The huggingface cache folder')
     hp.add_argument('--training-checkpoint-prefix', type=pathlib.Path, default=pathlib.Path('/fs/scratch/PAS2836/ipa_gpt/checkpoints'), help='The prefix of the temporary checkpoints folder')
-    dp = ap.add_argument_group('dataset')
-    dp.add_argument('--lang-1-features', type=str, nargs='+', required=True, help='The training features of language 1')
-    dp.add_argument('--lang-2-features', type=str, nargs='+', required=True, help='The training features of language 2')
-    dp.add_argument('--eval-feature', type=str, nargs='+', required=True, help='The validation feature for each dataset')
-    dp.add_argument('--num-classes', type=int, default=3, help='The number of classes')
-    dp.add_argument('--lang-1-splits', type=str, nargs=2, default=['train', 'validation'], help='The splits of language 1, must be "train eval"')
-    dp.add_argument('--lang-2-splits', type=str, nargs=2, default=['train', 'validation'], help='The splits of language 2, must be "train eval"')
     args = ap.parse_args()
 
     device = 'cpu' if not torch.cuda.is_available() or args.force_cpu else 'cuda'
@@ -105,7 +84,7 @@ if __name__ == "__main__":
 
         def preprocess(examples):
             features = flatten_multi_features(examples, fields)
-            encoded = tokenizer(features, truncation=True, max_length=args.context_size)
+            encoded = tokenizer(features, truncation=True, max_length=1024)
             encoded['label'] = examples[LANG_TO_LABELS[lang]]
             return encoded
 
