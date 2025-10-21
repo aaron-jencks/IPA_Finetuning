@@ -8,15 +8,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def generate_job_script(template: pathlib.Path, output: pathlib.Path, name: str, config: List[str]):
+def generate_job_script(template: pathlib.Path, output: pathlib.Path, name: str, args: str):
     logger.info(f'Generating job {name} from template {template}')
     with open(template, "r") as template_fp:
         template_body = template_fp.read()
 
-    logger.info(f'Using configs: {config}')
+    logger.info(f'Using cli args: "{args}"')
     body = template_body.format(
         job_name=name,
-        config_names=' '.join(config),
+        args=args,
     )
 
     with open(output, "w+") as output_fp:
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     )
     ap.add_argument("job_name", type=str, help="Name of the job")
     ap.add_argument("output", type=pathlib.Path, help="Path to the output file")
-    ap.add_argument("configs", type=pathlib.Path, nargs='+', help="Paths to the config files")
+    ap.add_argument("args", type=str, help="arg string to be passed to main script")
     args = ap.parse_args()
 
-    generate_job_script(args.template, args.output, args.job_name, list(map(str, args.configs)))
+    generate_job_script(args.template, args.output, args.job_name, args.args)
