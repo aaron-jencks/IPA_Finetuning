@@ -117,8 +117,8 @@ def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[s
     model = GPTForSequenceClassification(base_model, num_classes=class_count).to(device)
 
     # configure trainer
-    run_name = f'{model_type}-{'-'.join(train_langs)}'
-    temporary_output_dir = cfg["checkpoints"]["training"] / f"{cfg["wandb"]["project"]}-{run_name}/"
+    run_name = f'{model_type}-{"-".join(train_langs)}'
+    temporary_output_dir = cfg["checkpoints"]["training"] / f"{cfg['wandb']['project']}-{run_name}/"
     temporary_output_dir.mkdir(parents=True, exist_ok=True)
     hyperparameters = cfg["hyperparameters"]
     training_args = TrainingArguments(
