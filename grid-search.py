@@ -70,6 +70,8 @@ def generate_grid_job(
     unique_id = str(uuid.uuid4())
     logger.info(f'Generating grid job {unique_id} with parameters {hyperparameters}')
 
+    hyperparameters['uuid'] = unique_id
+
     hyperparameter_config_file = config_dir / f'{unique_id}.json'
     logger.info(f'Writing grid job parameters to {hyperparameter_config_file}')
     with open(hyperparameter_config_file, 'w+') as fp:
