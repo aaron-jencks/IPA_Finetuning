@@ -1,0 +1,7 @@
+{
+  "learning_rate": [1e-3, 1e-4, 1e-5, 1e-6],
+  "weight_decay": [0.0, 0.01],
+  "batch_size": [16, 32, 64],
+  "warmup_ratio": [0.0, 0.1, 0.2, 0.3],
+  "epochs": [2, 3, 4, 5]
+}
