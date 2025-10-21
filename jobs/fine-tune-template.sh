@@ -4,10 +4,10 @@
 #SBATCH --output=/fs/ess/PAS2836/ipa_gpt/jobs/logs/%x-%j.out
 #SBATCH --error=/fs/ess/PAS2836/ipa_gpt/jobs/logs/errors/%x-%j.err
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=16
-#SBATCH --time=03:00:00
+#SBATCH --ntasks-per-node={cpus}
+#SBATCH --time={timeout}
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --gpus-per-node=1
+#SBATCH --gpus-per-node={gpus}
 
 echo "===== [$(date)] JOB STARTED ====="
 
