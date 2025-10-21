@@ -59,6 +59,10 @@
           "text"
         ],
         "eval_feature": "adjusted_label",
+        "splits": [
+          "train",
+          "validation"
+        ],
         "task_type": "classification",
         "classes": 3
       }
@@ -88,6 +92,10 @@
           "text"
         ],
         "eval_feature": "binary_label",
+        "splits": [
+          "train",
+          "validation"
+        ],
         "task_type": "classification",
         "classes": 3
       }
