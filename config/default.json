@@ -10,6 +10,11 @@
   "hf_cache": "/fs/scratch/PAS2836/ipa_gpt/cache",
   "random_seed": 42,
   "cpu_only": false,
+  "hyperparameters": {
+    "weight_decay": 0.01,
+    "gradient_clipping": 1.0,
+    "batch_size": 16
+  },
   "wandb": {
     "entity": "aaronjencks-the-ohio-state-university",
     "config": {}
