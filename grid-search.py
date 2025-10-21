@@ -65,7 +65,8 @@ def generate_grid_job(
         job_name: str, train_lang: str, eval_lang: str, model_type: str,
         configs: List[pathlib.Path], hyperparameters: Dict[str, Any],
         template: pathlib.Path,
-        output_dir: pathlib.Path, config_dir: pathlib.Path
+        output_dir: pathlib.Path, config_dir: pathlib.Path,
+        job_timeout: str = '01:00:00',
 ):
     unique_id = str(uuid.uuid4())
     logger.info(f'Generating grid job {unique_id} with parameters {hyperparameters}')
@@ -88,6 +89,7 @@ def generate_grid_job(
     generate_job_script(
         template, job_script_file,
         generated_job_name, generated_args_string,
+        timeout=job_timeout,
         extra_args={
             'temp_config_name': hyperparameter_config_file,
         }
@@ -138,7 +140,8 @@ def grid_search_loop(
         cfg: dict,
         configs: List[pathlib.Path], grid_config: pathlib.Path,
         template: pathlib.Path,
-        output_dir: pathlib.Path, config_dir: pathlib.Path
+        output_dir: pathlib.Path, config_dir: pathlib.Path,
+        job_timeout: str = '01:00:00',
 ):
     ranges = load_grid_ranges(grid_config)
 
@@ -157,7 +160,8 @@ def grid_search_loop(
             generate_grid_job(
                 job_name, train_lang, val_lang, mt,
                 configs, current_config,
-                template, output_dir, config_dir
+                template, output_dir, config_dir,
+                job_timeout,
             )
 
         if finished:
@@ -191,7 +195,8 @@ if __name__ == "__main__":
         help="Path to the temporary configuration directory for generate config files"
     )
     ap.add_argument('--model-type', type=str, nargs='+', default=['normal', 'ipa'], help='Type of model to use')
+    ap.add_argument('--timeout', type=str, default='01:00:00', help='Timeout in for the slurm jobs')
     args = ap.parse_args()
     cfg, _ = load_config(args.config)
 
-    grid_search_loop(cfg, args.config, args.grid_config, args.template, args.output_dir, args.temp_config_dir)
+    grid_search_loop(cfg, args.config, args.grid_config, args.template, args.output_dir, args.temp_config_dir, args.timeout)
