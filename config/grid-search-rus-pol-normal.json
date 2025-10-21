@@ -1,6 +1,6 @@
 {
-  "learning_rate": [1e-4, 5e-5, 1e-5],
-  "batch_size": [64, 128, 256],
-  "warmup_ratio": [0.2, 0.3, 0.5],
-  "epochs": [2, 3, 4]
+  "learning_rate": [5e-5, 1e-5, 5e-6],
+  "batch_size": [16, 32, 64],
+  "warmup_ratio": [0.0, 0.05, 0.1, 0.2],
+  "epochs": [2, 3, 5]
 }
