@@ -9,5 +9,9 @@
   },
   "hf_cache": "/fs/scratch/PAS2836/ipa_gpt/cache",
   "random_seed": 42,
-  "cpu_only": false
+  "cpu_only": false,
+  "wandb": {
+    "entity": "aaronjencks-the-ohio-state-university",
+    "config": {}
+  }
 }
