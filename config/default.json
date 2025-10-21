@@ -16,7 +16,6 @@
     "batch_size": 16
   },
   "wandb": {
-    "entity": "aaronjencks-the-ohio-state-university",
-    "config": {}
+    "entity": "aaronjencks-the-ohio-state-university"
   }
 }
