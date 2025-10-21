@@ -1,6 +1,7 @@
 {
   "checkpoints": {
     "prefix": "/fs/scratch/PAS2836/ipa_gpt/checkpoints",
+    "training": "/fs/scratch/PAS2836/ipa_gpt/checkpoints",
     "is_medium": false
   },
   "tokenizers": {
