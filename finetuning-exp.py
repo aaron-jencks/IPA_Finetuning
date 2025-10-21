@@ -32,8 +32,8 @@ def get_tokenizer_paths(cfg: dict, type: str) -> Tuple[pathlib.Path, pathlib.Pat
     tokenizer_name = tokenizer_settings[f'{type}_prefix']
     logger.info(f"Loading tokenizer '{tokenizer_name}' from '{tokenizer_settings['prefix']}'")
     return (
-        tokenizer_settings["prefix"] / f'{tokenizer_name}-vocab.json',
-        tokenizer_settings["prefix"] / f'{tokenizer_name}-merges.txt',
+        pathlib.Path(tokenizer_settings["prefix"]) / f'{tokenizer_name}-vocab.json',
+        pathlib.Path(tokenizer_settings["prefix"]) / f'{tokenizer_name}-merges.txt',
     )
 
 
