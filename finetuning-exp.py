@@ -192,9 +192,10 @@ if __name__ == "__main__":
     ap = utils.setup_default_args(ap)
     ap.add_argument('--train-langs', nargs='+', type=str, help='The languages to train on')
     ap.add_argument('--eval-langs', nargs='+', type=str, help='The languages to evaluate on')
+    ap.add_argument('--model-type', type=str, nargs='+', default=['normal', 'ipa'], help='The model type')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config)
 
-    do_train_run(cfg, db, args.train_langs, args.eval_langs, "normal")
-    do_train_run(cfg, db, args.train_langs, args.eval_langs, "ipa")
+    for mt in args.model_type:
+        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt)
 
