@@ -1,4 +1,5 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
+cascade-config
 datasets
 evaluate
 scikit-learn

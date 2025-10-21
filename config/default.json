@@ -1,0 +1,12 @@
+{
+  "checkpoints": {
+    "prefix": "/fs/scratch/PAS2836/ipa_gpt/checkpoints",
+    "is_medium": false
+  },
+  "tokenizers": {
+    "prefix": "/fs/ess/PAS2836/ipa_gpt/tokenizers"
+  },
+  "hf_cache": "/fs/scratch/PAS2836/ipa_gpt/cache",
+  "random_seed": 42,
+  "cpu_only": false
+}
