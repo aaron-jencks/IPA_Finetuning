@@ -1,0 +1,96 @@
+{
+  "english": {
+    "entailment": {
+      "xnli": {
+        "dataset": "iggy12345/xnli-en-ipa",
+        "train_features": [
+          "premise",
+          "hypothesis"
+        ],
+        "eval_feature": "label",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "classification",
+        "classes": 3
+      }
+    }
+  },
+  "spanish": {
+    "entailment": {
+      "xnli": {
+        "dataset": "iggy12345/xnli-es-ipa",
+        "train_features": [
+          "premise",
+          "hypothesis"
+        ],
+        "eval_feature": "label",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "classification",
+        "classes": 3
+      }
+    }
+  },
+  "russian": {
+    "entailment": {
+      "xnli": {
+        "dataset": "iggy12345/xnli-ru-ipa",
+        "train_features": [
+          "premise",
+          "hypothesis"
+        ],
+        "eval_feature": "label",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "classification",
+        "classes": 3
+      }
+    },
+    "sentiment": {
+      "reviews": {
+        "dataset": "iggy12345/ru-reviews-classification-ipa",
+        "train_features": [
+          "text"
+        ],
+        "eval_feature": "adjusted_label",
+        "task_type": "classification",
+        "classes": 3
+      }
+    }
+  },
+  "polish": {
+    "entailment": {
+      "cdsc": {
+        "dataset": "iggy12345/cdsc-e-ipa",
+        "train_features": [
+          "sentence_A",
+          "sentence_B"
+        ],
+        "eval_feature": "label",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "classification",
+        "classes": 3
+      }
+    },
+    "sentiment": {
+      "allegro": {
+        "dataset": "iggy12345/allegro-reviews-ipa",
+        "train_features": [
+          "text"
+        ],
+        "eval_feature": "binary_label",
+        "task_type": "classification",
+        "classes": 3
+      }
+    }
+  }
+}
