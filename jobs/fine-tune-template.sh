@@ -42,6 +42,6 @@ echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
 TQDM_DISABLE=1 python finetuning-exp.py \
-  "$SLURM_JOB_ID" --config {config_names}
+  "$SLURM_JOB_ID" {args}
 
 echo "===== [$(date)] JOB COMPLETED ====="
