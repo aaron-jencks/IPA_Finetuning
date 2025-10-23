@@ -1,11 +1,11 @@
 {
   "checkpoints": {
-    "ipa": "russian_polish_ipa_12_5_50k",
-    "normal": "russian_polish_normal_12_5_50k"
+    "ipa": "russian_polish_ipa_09_25_2025_12_5_50k",
+    "normal": "russian_polish_normal_09_25_2025_12_5_50k"
   },
   "tokenizers": {
-    "ipa_prefix": "bpe-rus-pol-ipa-number-preservation",
-    "normal_prefix": "bpe-rus-pol-normal-number-preservation"
+    "ipa_prefix": "bpe-rus-pol-ipa-number-preservation-08-20-2025",
+    "normal_prefix": "bpe-rus-pol-normal-number-preservation-08-20-2025"
   },
   "task": "sentiment",
   "datasets": {
