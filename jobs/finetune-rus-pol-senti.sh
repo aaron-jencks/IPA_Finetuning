@@ -19,23 +19,18 @@ conda activate nanogpt_cu124  # TODO change this to your personal environment
 echo "Python: $(which python) ($(python --version))"
 
 train_lang="both"
-epochs=8
-learning_rate="1e-5"
-warmup=0.05
-batch_size=16
 for arg in "$@"; do
   case $arg in
     --train-lang=*) train_lang="${arg#*=}";;
-    --epochs=*) epochs="${arg#*=}";;
-    --learning-rate=*) learning_rate="${arg#*=}";;
-    --warmup=*) warmup="${arg#*=}";;
-    --batch-size=*) batch_size="${arg#*=}";;
     *)
       echo "unknown argument: $arg"
       exit 1
       ;;
   esac
 done
+
+if [[ "$train_lang" == "both" ]]; then train_lang="russian polish"; fi
+eval_lang="russian polish"
 
 # setup paths
 scratch_prefix="/fs/scratch/PAS2836/ipa_gpt"
@@ -44,36 +39,14 @@ scratch_hf_cache_prefix="$scratch_prefix/cache"
 mkdir -pv $scratch_github_prefix $scratch_hf_cache_prefix
 
 repo_name="IPA_Finetuning"
-repo_address="git@github.com:aaron-jencks/$repo_name.git"
-repo_branch="trainer"
 repo_dir="$scratch_github_prefix/$repo_name"
-if [ ! -d "$repo_dir" ]; then
-  cd "$scratch_github_prefix"
-  git clone "$repo_address"
-  cd "$repo_name"
-  git checkout "$repo_branch"
-else
-  cd "$repo_dir"
-  git pull
-fi
+cd "$repo_dir"
 
 echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
 TQDM_DISABLE=1 python finetuning-exp.py \
-  "$SLURM_JOB_ID" "sentiment" \
-  russian_polish_ipa_12_5_50k russian_polish_normal_12_5_50k \
-  bpe-rus-pol-ipa-number-preservation bpe-rus-pol-normal-number-preservation \
-  rus pol \
-  iggy12345/ru-reviews-classification-ipa iggy12345/allegro-reviews-ipa \
-  --lang-1-features text \
-  --lang-2-features text \
-  --train-lang "$train_lang" \
-  --learning-rate "$learning_rate" \
-  --warmup-ratio "$warmup" \
-  --batch-size "$batch_size" \
-  --eval-feature adjusted_label binary_label \
-  --num-classes 3 \
-  --epochs "$epochs"
+  "$SLURM_JOB_ID" config/finetune-rus-pol.json \
+  --train-langs $train_lang --eval-langs $eval_lang
 
 echo "===== [$(date)] JOB COMPLETED ====="
