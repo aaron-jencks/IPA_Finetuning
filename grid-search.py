@@ -4,7 +4,7 @@ import json
 import logging
 import pathlib
 import subprocess
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Union
 import uuid
 
 from config import load_config
@@ -62,7 +62,7 @@ class LooperValue(Value):
 
 
 def generate_grid_job(
-        job_name: str, train_lang: str, eval_lang: str, model_type: str,
+        job_name: str, train_lang: Union[str, List[str]], eval_lang: Union[str, List[str]], model_type: str,
         configs: List[pathlib.Path], hyperparameters: Dict[str, Any],
         template: pathlib.Path,
         output_dir: pathlib.Path, config_dir: pathlib.Path,
@@ -85,6 +85,10 @@ def generate_grid_job(
     job_script_file = output_dir / f'{generated_job_name}.sh'
     logger.info(f'Writing grid job script to {job_script_file}')
     config_string = ' '.join(map(str, configs))
+    if isinstance(train_lang, list):
+        train_lang = ' '.join(train_lang)
+    if isinstance(eval_lang, list):
+        eval_lang = ' '.join(eval_lang)
     generated_args_string = f'{config_string} {hyperparameter_config_file} --train-langs {train_lang} --eval-langs {eval_lang} --model-type {model_type}'
     generate_job_script(
         template, job_script_file,
@@ -145,11 +149,14 @@ def grid_search_loop(
 
     ranges = load_grid_ranges(r_config['parameters'])
 
-    languages = r_config['languages']
-    if len(languages) != 2:
-        raise ValueError(f'expected exactly 2 languages, but found {len(languages)}')
-    train_lang = languages[0]
-    val_lang = languages[1]
+    train_lang = r_config['languages']['train']
+    val_lang = r_config['languages']['eval']
+    if train_lang == 'all' or val_lang == 'all':
+        languages = list(cfg['datasets'].keys())
+        if train_lang == 'all':
+            train_lang = languages
+        if val_lang == 'all':
+            val_lang = languages
 
     job_name = f'{cfg["wandb"]["project"]}-gridsearch-{train_lang}-{val_lang}'
 

@@ -5,8 +5,7 @@
     "warmup_ratio": [0.0, 0.05, 0.1, 0.2],
     "epochs": [2, 3, 5]
   },
-  "languages": [
-    "russian",
-    "russian"
-  ]
+  "languages": {
+    "eval": "russian"
+  }
 }
