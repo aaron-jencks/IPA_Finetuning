@@ -158,7 +158,9 @@ def grid_search_loop(
         if val_lang == 'all':
             val_lang = languages
 
-    job_name = f'{cfg["wandb"]["project"]}-gridsearch-{train_lang}-{val_lang}'
+    train_lang_str = ' '.join(train_lang) if isinstance(train_lang, list) else train_lang
+    val_lang_str = ' '.join(val_lang) if isinstance(val_lang, list) else val_lang
+    job_name = f'{cfg["wandb"]["project"]}-gridsearch-{train_lang_str}-{val_lang_str}'
 
     while True:
         current_config, finished = perform_ripple(ranges)
