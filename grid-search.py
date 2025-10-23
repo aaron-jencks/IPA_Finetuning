@@ -99,14 +99,10 @@ def generate_grid_job(
     subprocess.run(['sbatch', job_script_file], check=True)
 
 
-def load_grid_ranges(grid_config: pathlib.Path) -> List[Value]:
-    logger.info(f'Loading grid ranges from {grid_config}')
-    with open(grid_config) as fp:
-        r_config = json.load(fp)
-
+def load_grid_ranges(grid_config: dict) -> List[Value]:
     ranges = []
-    for k in r_config.keys():
-        entity = r_config[k]
+    for k in grid_config.keys():
+        entity = grid_config[k]
         if isinstance(entity, list):
             logger.info(f'Loading {k} as a loop of values: {entity}')
             ranges.append(LooperValue(
@@ -143,9 +139,13 @@ def grid_search_loop(
         output_dir: pathlib.Path, config_dir: pathlib.Path,
         job_timeout: str = '01:00:00',
 ):
-    ranges = load_grid_ranges(grid_config)
+    logger.info(f'Loading grid ranges from {grid_config}')
+    with open(grid_config, 'r') as fp:
+        r_config = json.load(fp)
 
-    languages = list(cfg["datasets"].keys())
+    ranges = load_grid_ranges(r_config['parameters'])
+
+    languages = r_config['languages']
     if len(languages) != 2:
         raise ValueError(f'expected exactly 2 languages, but found {len(languages)}')
     train_lang = languages[0]
