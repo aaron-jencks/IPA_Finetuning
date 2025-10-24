@@ -1,0 +1,16 @@
+{
+  "task": "entailment",
+  "datasets": {
+    "russian": "xnli",
+    "polish": "cdsc"
+  },
+  "hyperparameters": {
+    "epochs": 2,
+    "learning_rate": 2.5e-5,
+    "warmup_ratio": 0.05,
+    "batch_size": 32
+  },
+  "wandb": {
+    "project": "rus-pol-finetuning-entailment-gridsearch"
+  }
+}
