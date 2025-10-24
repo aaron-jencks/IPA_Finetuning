@@ -1,16 +1,10 @@
 {
-  "task": "entailment",
-  "datasets": {
-    "russian": "xnli",
-    "polish": "cdsc"
+  "checkpoints": {
+    "ipa": "russian_polish_ipa_09_25_2025_12_5_50k",
+    "normal": "russian_polish_normal_09_25_2025_12_5_50k"
   },
-  "hyperparameters": {
-    "epochs": 2,
-    "learning_rate": 2.5e-5,
-    "warmup_ratio": 0.05,
-    "batch_size": 32
-  },
-  "wandb": {
-    "project": "rus-pol-finetuning-entailment-gridsearch"
+  "tokenizers": {
+    "ipa_prefix": "bpe-rus-pol-ipa-number-preservation-08-20-2025",
+    "normal_prefix": "bpe-rus-pol-normal-number-preservation-08-20-2025"
   }
 }
