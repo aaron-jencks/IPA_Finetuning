@@ -66,6 +66,21 @@
         "task_type": "classification",
         "classes": 3
       }
+    },
+    "quad": {
+      "sberquad": {
+        "dataset": "iggy12345/sberquad-ipa",
+        "train_features": [
+          "question",
+          "context"
+        ],
+        "eval_feature": "answers",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "question-answering"
+      }
     }
   },
   "polish": {
@@ -98,6 +113,21 @@
         ],
         "task_type": "classification",
         "classes": 3
+      }
+    },
+    "quad": {
+      "poquad": {
+        "dataset": "iggy12345/poquad-ipa",
+        "train_features": [
+          "question",
+          "context"
+        ],
+        "eval_feature": "answers",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "question-answering"
       }
     }
   }
