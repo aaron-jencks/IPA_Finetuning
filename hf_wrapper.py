@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from transformers.modeling_outputs import SequenceClassifierOutput
+from transformers.modeling_outputs import SequenceClassifierOutput, QuestionAnsweringModelOutput
 
 
 # class GPTForSequenceClassification(nn.Module):
@@ -73,4 +73,60 @@ class GPTForSequenceClassification(nn.Module):
             logits=pooled_logits,
             hidden_states=None,
             attentions=None,
+        )
+
+
+class GPTForQuestionAnswering(nn.Module):
+    def __init__(self, pretrained_model):
+        super().__init__()
+        self.pretrained_model = pretrained_model
+        self.hidden_size = pretrained_model.config.n_embd
+        self.pad_token_id = pretrained_model.config.pad_token_id
+
+        self.classifier = nn.Linear(self.hidden_size, 2, bias=False)
+        self.classifier.weight.data.normal_(mean=0.0, std=0.02)
+
+    def forward(
+        self,
+        input_ids=None,
+        attention_mask=None,
+        start_positions=None,
+        end_positions=None,
+        context_mask=None,
+        **kwargs
+    ):
+        # Pass through the LM (ensure we keep last_hidden_state)
+        outputs = self.pretrained_model(input_ids=input_ids, attention_mask=attention_mask, **kwargs)
+        hidden_states = outputs.last_hidden_state if hasattr(outputs, "last_hidden_state") else outputs[0]  # (B, L, H)
+
+        # (B, L, 2) -> split to (B, L)
+        logits = self.qa_outputs(hidden_states)
+        start_logits, end_logits = logits.split(1, dim=-1)
+        start_logits = start_logits.squeeze(-1)
+        end_logits   = end_logits.squeeze(-1)
+
+        # Mask pads (and optionally non-context tokens) so the model can't pick them
+        # Build a mask where True = invalid position to be set to -inf
+        invalid = None
+        if attention_mask is not None:
+            invalid = (attention_mask == 0)
+        if context_mask is not None:
+            invalid = context_mask == 0 if invalid is None else (invalid | (context_mask == 0))
+        if invalid is not None:
+            neg_inf = torch.finfo(start_logits.dtype).min
+            start_logits = start_logits.masked_fill(invalid, neg_inf)
+            end_logits   = end_logits.masked_fill(invalid,   neg_inf)
+
+        loss = None
+        if start_positions is not None and end_positions is not None:
+            # Cross-entropy over sequence length (per token)
+            loss_fct = nn.CrossEntropyLoss()
+            loss = (loss_fct(start_logits, start_positions) + loss_fct(end_logits, end_positions)) / 2.0
+
+        return QuestionAnsweringModelOutput(
+            loss=loss,
+            start_logits=start_logits,
+            end_logits=end_logits,
+            hidden_states=getattr(outputs, "hidden_states", None),
+            attentions=getattr(outputs, "attentions", None),
         )
