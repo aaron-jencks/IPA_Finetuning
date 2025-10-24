@@ -25,18 +25,8 @@ scratch_hf_cache_prefix="$scratch_prefix/cache"
 mkdir -pv $scratch_github_prefix $scratch_hf_cache_prefix
 
 repo_name="IPA_Finetuning"
-repo_address="git@github.com:aaron-jencks/$repo_name.git"
-repo_branch="cascade-config"
 repo_dir="$scratch_github_prefix/$repo_name"
-if [ ! -d "$repo_dir" ]; then
-  cd "$scratch_github_prefix"
-  git clone "$repo_address"
-  cd "$repo_name"
-  git checkout "$repo_branch"
-else
-  cd "$repo_dir"
-  git pull
-fi
+cd "$repo_dir"
 
 echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
