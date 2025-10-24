@@ -1,8 +1,8 @@
 {
-  "task": "sentiment",
+  "task": "entailment",
   "datasets": {
-    "russian": "reviews",
-    "polish": "allegro"
+    "russian": "xnli",
+    "polish": "cdsc"
   },
   "hyperparameters": {
     "epochs": 2,
@@ -11,6 +11,6 @@
     "batch_size": 32
   },
   "wandb": {
-    "project": "rus-pol-finetuning-sentiment"
+    "project": "rus-pol-finetuning-entailment-gridsearch"
   }
 }
