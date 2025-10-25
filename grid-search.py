@@ -6,6 +6,8 @@ import pathlib
 import subprocess
 from typing import List, Dict, Any, Tuple, Union
 import uuid
+import time
+import os
 
 from config import load_config
 from job_generator import generate_job_script
@@ -72,6 +74,7 @@ def generate_grid_job(
     logger.info(f'Generating grid job {unique_id} with parameters {hyperparameters}')
 
     hyperparameters['uuid'] = unique_id
+    hyperparameters['result_file'] = str(output_dir.parent / 'results' / f'{unique_id}.json')
 
     hyperparameter_config_file = config_dir / f'{unique_id}.json'
     logger.info(f'Writing grid job parameters to {hyperparameter_config_file}')
@@ -101,6 +104,71 @@ def generate_grid_job(
 
     logger.info(f'Queueing job {generated_job_name}')
     subprocess.run(['sbatch', job_script_file], check=True)
+
+
+def collect_results(config_dir: pathlib.Path, results_dir: pathlib.Path) -> Dict[str, Any]:
+    """Collect results from all completed jobs and return best configuration."""
+    results = []
+    
+    for result_file in results_dir.glob('*.json'):
+        try:
+            with open(result_file, 'r') as fp:
+                data = json.load(fp)
+                if 'final_metric' in data and 'uuid' in data:
+                    results.append(data)
+        except:
+            continue
+    
+    if not results:
+        logger.warning('No results found')
+        return {}
+    
+    # Sort by metric (assumes higher is better; change to reverse=False if lower is better)
+    best = max(results, key=lambda x: x['final_metric'])
+    
+    logger.info(f'Best result: UUID={best["uuid"]}, Metric={best["final_metric"]}')
+    logger.info(f'Best hyperparameters: {best.get("hyperparameters", {})}')
+    
+    return best
+
+
+def monitor_jobs(config_dir: pathlib.Path, results_dir: pathlib.Path, 
+                 check_interval: int = 300, early_stop_threshold: float = 0.1):
+    """Monitor running jobs and cancel those performing poorly."""
+    logger.info('Starting job monitoring for early stopping')
+    
+    checked_jobs = set()
+    
+    while True:
+        time.sleep(check_interval)
+        
+        # Check for intermediate results
+        for result_file in results_dir.glob('*_intermediate.json'):
+            uuid_str = result_file.stem.replace('_intermediate', '')
+            
+            if uuid_str in checked_jobs:
+                continue
+                
+            try:
+                with open(result_file, 'r') as fp:
+                    data = json.load(fp)
+                    
+                # Cancel if metric is below threshold after some epochs
+                if data.get('epoch', 0) >= 2 and data.get('metric', 1.0) < early_stop_threshold:
+                    job_name = f'{uuid_str}-*'
+                    logger.info(f'Cancelling poor job {uuid_str} (metric={data.get("metric")})')
+                    subprocess.run(['scancel', '--name', job_name], check=False)
+                    checked_jobs.add(uuid_str)
+            except:
+                continue
+        
+        # Break if all jobs done (optional - you can remove this to run indefinitely)
+        running = subprocess.run(['squeue', '-u', os.environ.get('USER', '')], 
+                                capture_output=True, text=True)
+        if 'gridsearch' not in running.stdout:
+            break
+    
+    logger.info('Job monitoring complete')
 
 
 def load_grid_ranges(grid_config: dict) -> List[Value]:
@@ -177,6 +245,14 @@ def grid_search_loop(
             break
 
     logger.info(f'Finished generating grid search for {job_name}')
+    
+    # Create results directory
+    results_dir = output_dir.parent / 'results'
+    results_dir.mkdir(exist_ok=True)
+    
+    # Monitor jobs and collect results
+    monitor_jobs(config_dir, results_dir, check_interval=300, early_stop_threshold=0.5)
+    best_config = collect_results(config_dir, results_dir)
 
 
 if __name__ == "__main__":
