@@ -56,4 +56,8 @@ def compute_metrics(eval_pred):
 def setup_default_args(ap: ArgumentParser) -> ArgumentParser:
     ap.add_argument('job_number', type=str, help='slurm job number')
     ap.add_argument('config', type=pathlib.Path, nargs='+', help='paths to config files')
+    ap.add_argument('--default-config', type=pathlib.Path, default=pathlib.Path('config/default.json'),
+                    help='path to the default config file')
+    ap.add_argument('--language-database', type=pathlib.Path, default=pathlib.Path('config/language-database.json'),
+                    help='path to the default config file')
     return ap
