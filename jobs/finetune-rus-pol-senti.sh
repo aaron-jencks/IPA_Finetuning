@@ -5,7 +5,7 @@
 #SBATCH --error=/fs/ess/PAS2836/ipa_gpt/jobs/logs/errors/%x-%j.err
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
-#SBATCH --time=03:00:00
+#SBATCH --time=01:00:00
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --gpus-per-node=1
 
