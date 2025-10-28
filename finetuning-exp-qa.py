@@ -51,7 +51,7 @@ def format_qa_string(q: str, c: str, sep: str) -> str:
     return f'{sep} {q} {sep} {c} {sep}'
 
 
-def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type) -> Dataset:
+def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type, cpus: int = os.cpu_count()) -> Dataset:
     dataset_settings = db[lang][cfg["task"]][cfg["datasets"][lang]]
     dataset_name = dataset_settings["dataset"]
 
@@ -69,7 +69,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type)
             'formatted_strings': strings,
         }
 
-    ds_pre = ds.map(preprocess, batched=True, num_proc=os.cpu_count())
+    ds_pre = ds.map(preprocess, batched=True, num_proc=cpus)
 
     if dataset_settings['filter_length']:
         def preprocess(examples):
@@ -78,7 +78,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type)
                 'encoding_length': [len(row) for row in encoded['input_ids']],
             }
 
-        ds_pre = ds_pre.map(preprocess, batched=True, num_proc=os.cpu_count())
+        ds_pre = ds_pre.map(preprocess, batched=True, num_proc=cpus)
         ds_pre = ds_pre.filter(lambda r: r['encoding_length'] <= 1024)
 
     # source: https://huggingface.co/docs/transformers/en/tasks/question_answering
@@ -135,7 +135,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type)
         inputs["end_positions"] = end_positions
         return inputs
 
-    return ds_pre.map(preprocess, batched=True, num_proc=os.cpu_count())
+    return ds_pre.map(preprocess, batched=True, num_proc=cpus)
 
 
 # 1) Minimal postprocess: logits -> span text
@@ -233,7 +233,11 @@ def concatenate_datasets_reenumerate_ids(
     return mixed
 
 
-def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[str], model_type: str) -> dict:
+def do_train_run(
+        cfg: dict, db: dict,
+        train_langs: List[str], eval_langs: List[str], model_type: str,
+        cpus: int = os.cpu_count()
+) -> dict:
     device = 'cpu' if not torch.cuda.is_available() or cfg['cpu_only'] else 'cuda'
     logger.info(f'Using device "{device}"')
 
@@ -252,10 +256,10 @@ def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[s
         dataset_settings = db[train_lang][cfg["task"]][cfg["datasets"][train_lang]]
         if dataset_settings["task_type"] != "question-answering":
             raise NotImplementedError("non-qa tasks are not supported")
-        ds = load_and_preprocess(cfg, db, train_lang, dataset_settings["splits"][0], tokenizer, model_type)
+        ds = load_and_preprocess(cfg, db, train_lang, dataset_settings["splits"][0], tokenizer, model_type, cpus)
         train_datasets.append(ds)
     if len(train_datasets) > 0:
-        train_dataset = concatenate_datasets_reenumerate_ids(train_datasets, "id", args.cpus)
+        train_dataset = concatenate_datasets_reenumerate_ids(train_datasets, "id", cpus)
     else:
         train_dataset = train_datasets[0]
 
@@ -264,7 +268,7 @@ def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[s
         dataset_settings = db[eval_lang][cfg["task"]][cfg["datasets"][eval_lang]]
         if dataset_settings["task_type"] != "question-answering":
             raise NotImplementedError("non-qa tasks are not supported")
-        ds = load_and_preprocess(cfg, db, eval_lang, dataset_settings["splits"][1], tokenizer, model_type)
+        ds = load_and_preprocess(cfg, db, eval_lang, dataset_settings["splits"][1], tokenizer, model_type, cpus)
         eval_datasets[eval_lang] = ds
 
     train_eval_dataset_name = sorted(list(eval_datasets.keys()), key=lambda k: len(eval_datasets[k]))[0]
@@ -365,5 +369,5 @@ if __name__ == "__main__":
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
     for mt in args.model_type:
-        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt)
+        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt, args.cpus)
 
