@@ -82,9 +82,10 @@ class GPTForQuestionAnswering(nn.Module):
         self.pretrained_model = pretrained_model
         self.hidden_size = pretrained_model.config.n_embd
         self.pad_token_id = pretrained_model.config.pad_token_id
-
-        self.classifier = nn.Linear(self.hidden_size, 2, bias=False)
-        self.classifier.weight.data.normal_(mean=0.0, std=0.02)
+        self.qa_outputs = nn.Linear(self.hidden_size, 2)  # -> (B, L, 2)
+        nn.init.normal_(self.qa_outputs.weight, mean=0.0, std=0.02)
+        if self.qa_outputs.bias is not None:
+            nn.init.zeros_(self.qa_outputs.bias)
 
     def forward(
         self,
@@ -99,11 +100,11 @@ class GPTForQuestionAnswering(nn.Module):
         outputs = self.pretrained_model(input_ids=input_ids, attention_mask=attention_mask, **kwargs)
         hidden_states = outputs.last_hidden_state if hasattr(outputs, "last_hidden_state") else outputs[0]  # (B, L, H)
 
-        # (B, L, 2) -> split to (B, L)
-        logits = self.qa_outputs(hidden_states)
-        start_logits, end_logits = logits.split(1, dim=-1)
-        start_logits = start_logits.squeeze(-1)
-        end_logits   = end_logits.squeeze(-1)
+        # Project to 2 logits per token and split
+        logits = self.qa_outputs(hidden_states)  # (B,L,2)
+        start_logits, end_logits = logits.split(1, dim=-1)  # (B,L,1),(B,L,1)
+        start_logits = start_logits.squeeze(-1)  # (B,L)
+        end_logits = end_logits.squeeze(-1)  # (B,L)
 
         # Mask pads (and optionally non-context tokens) so the model can't pick them
         # Build a mask where True = invalid position to be set to -inf
