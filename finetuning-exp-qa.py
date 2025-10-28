@@ -240,8 +240,8 @@ def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[s
     train_datasets = []
     for train_lang in train_langs:
         dataset_settings = db[train_lang][cfg["task"]][cfg["datasets"][train_lang]]
-        if dataset_settings["task_type"] != "quad":
-            raise NotImplementedError("non-quad tasks are not supported")
+        if dataset_settings["task_type"] != "qa":
+            raise NotImplementedError("non-qa tasks are not supported")
         ds = load_and_preprocess(cfg, db, train_lang, dataset_settings["splits"][0], tokenizer, model_type)
         train_datasets.append(ds)
     if len(train_datasets) > 0:
@@ -252,8 +252,8 @@ def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[s
     eval_datasets = {}
     for eval_lang in eval_langs:
         dataset_settings = db[eval_lang][cfg["task"]][cfg["datasets"][eval_lang]]
-        if dataset_settings["task_type"] != "quad":
-            raise NotImplementedError("non-quad tasks are not supported")
+        if dataset_settings["task_type"] != "qa":
+            raise NotImplementedError("non-qa tasks are not supported")
         ds = load_and_preprocess(cfg, db, eval_lang, dataset_settings["splits"][1], tokenizer, model_type)
         eval_datasets[eval_lang] = ds
 
