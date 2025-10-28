@@ -13,7 +13,8 @@
           "validation"
         ],
         "task_type": "classification",
-        "classes": 3
+        "classes": 3,
+        "filter_length": false
       }
     }
   },
@@ -31,7 +32,8 @@
           "validation"
         ],
         "task_type": "classification",
-        "classes": 3
+        "classes": 3,
+        "filter_length": false
       }
     }
   },
@@ -49,7 +51,8 @@
           "validation"
         ],
         "task_type": "classification",
-        "classes": 3
+        "classes": 3,
+        "filter_length": false
       }
     },
     "sentiment": {
@@ -64,7 +67,8 @@
           "validation"
         ],
         "task_type": "classification",
-        "classes": 3
+        "classes": 3,
+        "filter_length": false
       }
     },
     "qa": {
@@ -79,7 +83,8 @@
           "train",
           "validation"
         ],
-        "task_type": "question-answering"
+        "task_type": "question-answering",
+        "filter_length": true
       }
     }
   },
@@ -97,7 +102,8 @@
           "validation"
         ],
         "task_type": "classification",
-        "classes": 3
+        "classes": 3,
+        "filter_length": false
       }
     },
     "sentiment": {
@@ -112,7 +118,8 @@
           "validation"
         ],
         "task_type": "classification",
-        "classes": 3
+        "classes": 3,
+        "filter_length": false
       }
     },
     "qa": {
@@ -127,7 +134,8 @@
           "train",
           "validation"
         ],
-        "task_type": "question-answering"
+        "task_type": "question-answering",
+        "filter_length": true
       }
     }
   }
