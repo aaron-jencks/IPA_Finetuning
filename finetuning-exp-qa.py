@@ -4,7 +4,7 @@ import os
 import pathlib
 from typing import Tuple, List
 
-from datasets import load_dataset, concatenate_datasets, Dataset
+from datasets import load_dataset, concatenate_datasets, Dataset, Value
 import evaluate
 import numpy as np
 import torch
@@ -75,7 +75,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type)
         def preprocess(examples):
             encoded = tokenizer(examples['formatted_strings'])
             return {
-                'encoding_length': [len(row['input_ids']) for row in encoded],
+                'encoding_length': [len(row) for row in encoded['input_ids']],
             }
 
         ds_pre = ds_pre.map(preprocess, batched=True, num_proc=os.cpu_count())
@@ -86,7 +86,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type)
         inputs = tokenizer(
             examples['formatted_strings'],
             max_length=1024,
-            trucation=True,
+            truncation=True,
             return_offsets_mapping=True,
             padding='max_length',
         )
@@ -222,6 +222,17 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
     return compute_metrics
 
 
+def concatenate_datasets_reenumerate_ids(
+        datasets: List[Dataset], id_feature: str = 'id',
+        cpus: int = os.cpu_count()
+) -> Dataset:
+    mixed = concatenate_datasets(list(datasets))
+    def _add_id(_, idx): return {id_feature: int(idx)}
+    mixed = mixed.map(_add_id, with_indices=True, num_proc=cpus)
+    mixed = mixed.cast_column(id_feature, Value("int64"))
+    return mixed
+
+
 def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[str], model_type: str) -> dict:
     device = 'cpu' if not torch.cuda.is_available() or cfg['cpu_only'] else 'cuda'
     logger.info(f'Using device "{device}"')
@@ -236,7 +247,6 @@ def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[s
     # load the datasets
     # merge train datasets
     # keep validation separate
-    class_count = -1
     train_datasets = []
     for train_lang in train_langs:
         dataset_settings = db[train_lang][cfg["task"]][cfg["datasets"][train_lang]]
@@ -245,7 +255,7 @@ def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[s
         ds = load_and_preprocess(cfg, db, train_lang, dataset_settings["splits"][0], tokenizer, model_type)
         train_datasets.append(ds)
     if len(train_datasets) > 0:
-        train_dataset = concatenate_datasets(train_datasets)
+        train_dataset = concatenate_datasets_reenumerate_ids(train_datasets, "id", args.cpus)
     else:
         train_dataset = train_datasets[0]
 
