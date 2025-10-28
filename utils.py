@@ -1,3 +1,4 @@
+import os
 import pathlib
 from argparse import ArgumentParser
 from typing import List
@@ -60,4 +61,5 @@ def setup_default_args(ap: ArgumentParser) -> ArgumentParser:
                     help='path to the default config file')
     ap.add_argument('--language-database', type=pathlib.Path, default=pathlib.Path('config/language-database.json'),
                     help='path to the default config file')
+    ap.add_argument('--cpus', type=int, default=os.cpu_count(), help='number of cpus')
     return ap
