@@ -45,7 +45,7 @@ def get_fields(settings: dict, model_type: str) -> List[str]:
     return feats
 
 
-def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type) -> Dataset:
+def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type, cpus: int = os.cpu_count()) -> Dataset:
     dataset_settings = db[lang][cfg["task"]][cfg["datasets"][lang]]
     dataset_name = dataset_settings["dataset"]
 
@@ -62,7 +62,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type)
             encoded['label'] = examples[dataset_settings["eval_feature"]]
             return encoded
 
-        result = ds.map(preprocess, batched=True, num_proc=os.cpu_count())
+        result = ds.map(preprocess, batched=True, num_proc=cpus)
         return result.filter(lambda r: len(r['input_ids']) <= 1024)
 
     def preprocess(examples):
@@ -71,10 +71,14 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type)
         encoded['label'] = examples[dataset_settings["eval_feature"]]
         return encoded
 
-    return ds.map(preprocess, batched=True, num_proc=os.cpu_count())
+    return ds.map(preprocess, batched=True, num_proc=cpus)
 
 
-def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[str], model_type: str) -> dict:
+def do_train_run(
+        cfg: dict, db: dict,
+        train_langs: List[str], eval_langs: List[str], model_type: str,
+        cpus: int = os.cpu_count()
+) -> dict:
     device = 'cpu' if not torch.cuda.is_available() or cfg['cpu_only'] else 'cuda'
     logger.info(f'Using device "{device}"')
 
@@ -99,7 +103,7 @@ def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[s
             class_count = dclasses
         elif class_count != dclasses:
             raise ValueError(f'dataset output class count mismatch ({dclasses} vs {class_count})')
-        ds = load_and_preprocess(cfg, db, train_lang, dataset_settings["splits"][0], tokenizer, model_type)
+        ds = load_and_preprocess(cfg, db, train_lang, dataset_settings["splits"][0], tokenizer, model_type, cpus)
         train_datasets.append(ds)
     if len(train_datasets) > 0:
         train_dataset = concatenate_datasets(train_datasets)
@@ -114,7 +118,7 @@ def do_train_run(cfg: dict, db: dict, train_langs: List[str], eval_langs: List[s
         dclasses = dataset_settings["classes"]
         if class_count != dclasses:
             raise ValueError(f'dataset output class count mismatch ({dclasses} vs {class_count})')
-        ds = load_and_preprocess(cfg, db, eval_lang, dataset_settings["splits"][1], tokenizer, model_type)
+        ds = load_and_preprocess(cfg, db, eval_lang, dataset_settings["splits"][1], tokenizer, model_type, cpus)
         eval_datasets[eval_lang] = ds
 
     train_eval_dataset_name = sorted(list(eval_datasets.keys()), key=lambda k: len(eval_datasets[k]))[0]
@@ -207,5 +211,5 @@ if __name__ == "__main__":
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
     for mt in args.model_type:
-        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt)
+        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt, args.cpus)
 
