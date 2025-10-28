@@ -13,7 +13,8 @@
   "hyperparameters": {
     "weight_decay": 0.01,
     "gradient_clipping": 1.0,
-    "batch_size": 16
+    "batch_size": 16,
+    "top_k": 50
   },
   "wandb": {
     "entity": "aaronjencks-the-ohio-state-university"
