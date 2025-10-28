@@ -93,12 +93,11 @@ class GPTForQuestionAnswering(nn.Module):
         attention_mask=None,
         start_positions=None,
         end_positions=None,
-        context_mask=None,
         **kwargs
     ):
         # Pass through the LM (ensure we keep last_hidden_state)
-        outputs = self.pretrained_model(input_ids=input_ids, attention_mask=attention_mask, **kwargs)
-        hidden_states = outputs.last_hidden_state if hasattr(outputs, "last_hidden_state") else outputs[0]  # (B, L, H)
+        hidden_states = self.pretrained_model(input_ids)
+        # hidden_states = outputs.last_hidden_state if hasattr(outputs, "last_hidden_state") else outputs[0]  # (B, L, H)
 
         # Project to 2 logits per token and split
         logits = self.qa_outputs(hidden_states)  # (B,L,2)
@@ -106,17 +105,12 @@ class GPTForQuestionAnswering(nn.Module):
         start_logits = start_logits.squeeze(-1)  # (B,L)
         end_logits = end_logits.squeeze(-1)  # (B,L)
 
-        # Mask pads (and optionally non-context tokens) so the model can't pick them
-        # Build a mask where True = invalid position to be set to -inf
-        invalid = None
-        if attention_mask is not None:
-            invalid = (attention_mask == 0)
-        if context_mask is not None:
-            invalid = context_mask == 0 if invalid is None else (invalid | (context_mask == 0))
-        if invalid is not None:
-            neg_inf = torch.finfo(start_logits.dtype).min
-            start_logits = start_logits.masked_fill(invalid, neg_inf)
-            end_logits   = end_logits.masked_fill(invalid,   neg_inf)
+        invalid = input_ids.eq(self.pad_token_id)
+
+        very_neg = -1e9 if start_logits.dtype in (torch.float16, torch.bfloat16) else torch.finfo(
+            start_logits.dtype).min
+        start_logits = start_logits.masked_fill(invalid, very_neg)
+        end_logits = end_logits.masked_fill(invalid, very_neg)
 
         loss = None
         if start_positions is not None and end_positions is not None:
@@ -128,6 +122,6 @@ class GPTForQuestionAnswering(nn.Module):
             loss=loss,
             start_logits=start_logits,
             end_logits=end_logits,
-            hidden_states=getattr(outputs, "hidden_states", None),
-            attentions=getattr(outputs, "attentions", None),
+            hidden_states=hidden_states,
+            attentions=None,
         )
