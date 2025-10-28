@@ -6,8 +6,8 @@
   },
   "hyperparameters": {
     "epochs": 2,
-    "learning_rate": 2.5e-5,
-    "warmup_ratio": 0.05,
+    "learning_rate": 1e-5,
+    "warmup_ratio": 0.225,
     "batch_size": 32
   },
   "wandb": {
