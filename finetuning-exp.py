@@ -55,6 +55,16 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type)
     ds = load_dataset(dataset_name, split=split, cache_dir=cfg["hf_cache"])
     fields = get_fields(dataset_settings, model_type)
 
+    if dataset_settings['filter_length']:
+        def preprocess(examples):
+            features = flatten_multi_features(examples, fields)
+            encoded = tokenizer(features)
+            encoded['label'] = examples[dataset_settings["eval_feature"]]
+            return encoded
+
+        result = ds.map(preprocess, batched=True, num_proc=os.cpu_count())
+        return result.filter(lambda r: len(r['input_ids']) <= 1024)
+
     def preprocess(examples):
         features = flatten_multi_features(examples, fields)
         encoded = tokenizer(features, truncation=True, max_length=1024)
