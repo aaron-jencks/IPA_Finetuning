@@ -107,8 +107,7 @@ class GPTForQuestionAnswering(nn.Module):
 
         invalid = input_ids.eq(self.pad_token_id)
 
-        very_neg = -1e9 if start_logits.dtype in (torch.float16, torch.bfloat16) else torch.finfo(
-            start_logits.dtype).min
+        very_neg = torch.finfo(start_logits.dtype).min
         start_logits = start_logits.masked_fill(invalid, very_neg)
         end_logits = end_logits.masked_fill(invalid, very_neg)
 
