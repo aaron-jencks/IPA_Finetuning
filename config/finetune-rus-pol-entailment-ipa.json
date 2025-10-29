@@ -11,6 +11,6 @@
     "batch_size": 128
   },
   "wandb": {
-    "project": "rus-pol-finetuning-entailment-gridsearch"
+    "project": "rus-pol-finetuning-entailment"
   }
 }
