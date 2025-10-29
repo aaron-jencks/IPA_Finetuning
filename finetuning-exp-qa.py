@@ -331,8 +331,6 @@ def do_train_run(
         compute_metrics=metrics,
     )
 
-    trainer.evaluate()
-
     logger.info("starting training")
     results = trainer.train()
     logger.info("finished training")
