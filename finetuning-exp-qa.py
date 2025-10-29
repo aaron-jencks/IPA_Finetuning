@@ -248,6 +248,10 @@ def do_train_run(
     device = 'cpu' if not torch.cuda.is_available() or cfg['cpu_only'] else 'cuda'
     logger.info(f'Using device "{device}"')
 
+    logger.info(f'Trainig on: {train_langs}')
+    logger.info(f'Evaluation on: {eval_langs}')
+    logger.info(f'Model: {model_type}')
+
     # load the model
     vocab_path, merges_path = get_tokenizer_paths(cfg, model_type)
     tokenizer = load_tokenizer(vocab_path, merges_path)
@@ -258,6 +262,8 @@ def do_train_run(
     # load the datasets
     # merge train datasets
     # keep validation separate
+    logger.info('loading training datasets')
+
     train_datasets = []
     for train_lang in train_langs:
         dataset_settings = db[train_lang][cfg["task"]][cfg["datasets"][train_lang]]
@@ -269,6 +275,8 @@ def do_train_run(
         train_dataset = concatenate_datasets_reenumerate_ids(train_datasets, "id", cpus)
     else:
         train_dataset = train_datasets[0]
+
+    logger.info('loading eval datasets')
 
     eval_datasets = {}
     for eval_lang in eval_langs:
@@ -282,13 +290,19 @@ def do_train_run(
     logger.info(f'using "{train_eval_dataset_name}" for trainning evaluation because it\'s the shortest')
     train_eval_dataset = eval_datasets[train_eval_dataset_name]
 
+    logger.info('creating metrics function')
+
     metrics = make_qa_compute_metrics(
         cfg, db, train_eval_dataset_name,
         train_eval_dataset,
         train_eval_dataset,
     )
 
+    logger.info('setting up model wrapper')
+
     model = GPTForQuestionAnswering(base_model).to(device)
+
+    logger.info('configuring training args')
 
     # configure trainer
     run_name = f'{model_type}-{"-".join(train_langs)}'
@@ -318,6 +332,8 @@ def do_train_run(
         disable_tqdm=not debug,
         no_cuda=cfg["cpu_only"],
     )
+
+    logger.info('starting wandb')
 
     # run training
     wandb_settings = cfg["wandb"]
