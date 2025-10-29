@@ -172,30 +172,17 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
     use_ids = "id" in examples.column_names
 
     for i in range(len(features)):
-        logger.info(f'evaluating index {i}')
-
-        logger.info('extracting context')
-
         context = contexts[i]
-
-        logger.info('extracting offset mappings')
-
         offsets = offset_maps[i]
-
-        logger.info('extracting logits')
 
         s_log = start_logits[i]
         e_log = end_logits[i]
 
         best_text, best_score = "", -1e9
 
-        logger.info('starting argsort')
-
         # top-k search that enforces e >= s and max_answer_length
         start_idxes = numpy_topk(s_log, n_best_size)
         end_idxes = numpy_topk(e_log, n_best_size)
-
-        logger.info('starting nested loop')
 
         for s in start_idxes:
             for e in end_idxes:
