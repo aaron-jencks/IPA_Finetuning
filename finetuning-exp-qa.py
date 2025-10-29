@@ -169,7 +169,12 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
     for i in tqdm(range(len(features))):
         logger.info(f'evaluating index {i}')
 
+        logger.info('extracting context')
+
         context = examples["context"][i]
+
+        logger.info('extracting offset mappings')
+
         offsets = features["offset_mapping"][i]
 
         logger.info('extracting logits')
