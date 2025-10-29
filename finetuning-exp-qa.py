@@ -233,12 +233,18 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
         preds = []
         refs  = []
         for i, eid in enumerate(examples["id"]):
+            logger.info('getting predictions')
+
             pred_text = predictions.get(eid, "")
+
+            logger.info('getting reference')
 
             gold_texts = gold_texts_arr[i]["text"]
 
-            preds.append({"id": eid, "prediction_text": pred_text})
-            refs.append({"id": eid, "answers": {
+            logger.info('adding to arrays')
+
+            preds.append({"id": str(eid), "prediction_text": pred_text})
+            refs.append({"id": str(eid), "answers": {
                 "text": gold_texts,
                 "answer_start": examples[efeat][i]["answer_start"],
             }})
