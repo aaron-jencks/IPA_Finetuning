@@ -82,6 +82,10 @@ def do_train_run(
     device = 'cpu' if not torch.cuda.is_available() or cfg['cpu_only'] else 'cuda'
     logger.info(f'Using device "{device}"')
 
+    logger.info(f'Trainig on: {train_langs}')
+    logger.info(f'Evaluation on: {eval_langs}')
+    logger.info(f'Model: {model_type}')
+
     # load the model
     vocab_path, merges_path = get_tokenizer_paths(cfg, model_type)
     tokenizer = load_tokenizer(vocab_path, merges_path)
