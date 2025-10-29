@@ -161,10 +161,14 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
         raise ValueError('unrecognized raw_predictions value')
     assert len(features) == len(examples)
 
+    logger.info('starting evaluation loop')
+
     preds = {}
     use_ids = "id" in examples.column_names
 
     for i in tqdm(range(len(features))):
+        logger.info(f'evaluating index {i}')
+
         context = examples["context"][i]
         offsets = features["offset_mapping"][i]
 
@@ -173,9 +177,13 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
 
         best_text, best_score = "", -1e9
 
+        logger.info('starting argsort')
+
         # top-k search that enforces e >= s and max_answer_length
         start_idxes = numpy_topk(s_log, n_best_size)
         end_idxes = numpy_topk(e_log, n_best_size)
+
+        logger.info('starting nested loop')
 
         for s in start_idxes:
             for e in end_idxes:
