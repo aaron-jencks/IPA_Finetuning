@@ -172,6 +172,8 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
         context = examples["context"][i]
         offsets = features["offset_mapping"][i]
 
+        logger.info('extracting logits')
+
         s_log = start_logits[i]
         e_log = end_logits[i]
 
