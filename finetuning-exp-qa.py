@@ -153,6 +153,11 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
 
     logger.info(f'evaluating top {n_best_size} indices')
 
+    logger.info('extracting contexts and offsets')
+
+    contexts = examples["context"]
+    offset_maps = features["offset_mapping"]
+
     if len(raw_predictions) == 2:
         start_logits, end_logits = raw_predictions
     elif len(raw_predictions) == 3:
@@ -171,11 +176,11 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
 
         logger.info('extracting context')
 
-        context = examples["context"][i]
+        context = contexts[i]
 
         logger.info('extracting offset mappings')
 
-        offsets = features["offset_mapping"][i]
+        offsets = offset_maps[i]
 
         logger.info('extracting logits')
 
