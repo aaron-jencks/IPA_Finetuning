@@ -140,6 +140,11 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type,
     return ds_pre.map(preprocess, batched=True, num_proc=cpus)
 
 
+def numpy_topk(arr, k):
+    ind = np.argpartition(arr, -k)[-k:]
+    return ind[np.argsort(arr[ind])]
+
+
 # 1) Minimal postprocess: logits -> span text
 def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
     hyperparameters = cfg['hyperparameters']
@@ -169,8 +174,8 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
         best_text, best_score = "", -1e9
 
         # top-k search that enforces e >= s and max_answer_length
-        _, start_idxes = torch.topk(s_log, n_best_size)
-        _, end_idxes = torch.topk(e_log, n_best_size)
+        start_idxes = numpy_topk(s_log, n_best_size)
+        end_idxes = numpy_topk(e_log, n_best_size)
 
         for s in start_idxes:
             for e in end_idxes:
