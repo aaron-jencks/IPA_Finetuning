@@ -232,7 +232,7 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
         # Build HF metric inputs
         preds = []
         refs  = []
-        for i, eid in enumerate(tqdm(examples["id"])):
+        for i, eid in enumerate(examples["id"]):
             pred_text = predictions.get(eid, "")
 
             gold_texts = gold_texts_arr[i]["text"]
