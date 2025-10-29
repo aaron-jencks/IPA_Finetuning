@@ -9,6 +9,8 @@ import evaluate
 import numpy as np
 import torch
 from transformers import Trainer, TrainingArguments, DataCollatorWithPadding
+from transformers.modeling_outputs import QuestionAnsweringModelOutput
+
 import wandb
 
 import config
@@ -139,12 +141,13 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type,
 
 
 # 1) Minimal postprocess: logits -> span text
-def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
+def postprocess_qa_predictions(cfg, examples, features, raw_predictions: QuestionAnsweringModelOutput):
     hyperparameters = cfg['hyperparameters']
     n_best_size = hyperparameters['top_k']
     max_answer_length = hyperparameters['max_answer_length']
 
-    start_logits, end_logits = raw_predictions
+    start_logits = raw_predictions.start_logits
+    end_logits = raw_predictions.end_logits
     assert len(features) == len(examples)
 
     preds = {}
