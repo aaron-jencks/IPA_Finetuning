@@ -206,10 +206,13 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
     def compute_metrics(eval_pred):
         # eval_pred.predictions is (start_logits, end_logits)
         # eval_pred.label_ids is usually (start_pos, end_pos), but we don't need it here
+        logger.info("starting metric computation")
+        logger.info('starting postprocessing')
         predictions = postprocess_qa_predictions(
             cfg, examples, features, eval_pred.predictions,
         )
 
+        logger.info('building metric arrays')
         # Build HF metric inputs
         preds = []
         refs  = []
@@ -224,6 +227,7 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
                 "answer_start": examples[efeat][i]["answer_start"],
             }})
 
+        logger.info('computing metrics')
         return metric.compute(predictions=preds, references=refs)
 
     return compute_metrics
