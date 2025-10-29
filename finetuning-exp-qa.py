@@ -166,7 +166,7 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
     preds = {}
     use_ids = "id" in examples.column_names
 
-    for i in tqdm(range(len(features))):
+    for i in range(len(features)):
         logger.info(f'evaluating index {i}')
 
         logger.info('extracting context')
