@@ -8,9 +8,9 @@ from datasets import load_dataset, concatenate_datasets, Dataset, Value
 import evaluate
 import numpy as np
 import torch
+from tqdm import tqdm
 from transformers import Trainer, TrainingArguments, DataCollatorWithPadding
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
-
 import wandb
 
 import config
@@ -157,7 +157,7 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
     preds = {}
     use_ids = "id" in examples.column_names
 
-    for i in range(len(features)):
+    for i in tqdm(range(len(features))):
         context = examples["context"][i]
         offsets = features["offset_mapping"][i]
 
