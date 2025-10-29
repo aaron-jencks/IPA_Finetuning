@@ -325,11 +325,13 @@ def do_train_run(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
-        eval_dataset=train_eval_dataset[1],
+        eval_dataset=train_eval_dataset,
         tokenizer=tokenizer,
         data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
         compute_metrics=metrics,
     )
+
+    trainer.evaluate()
 
     logger.info("starting training")
     results = trainer.train()
