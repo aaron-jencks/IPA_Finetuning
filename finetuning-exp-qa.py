@@ -169,8 +169,8 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
         best_text, best_score = "", -1e9
 
         # top-k search that enforces e >= s and max_answer_length
-        start_idxes = np.argsort(s_log)[-n_best_size:][::-1]
-        end_idxes = np.argsort(e_log)[-n_best_size:][::-1]
+        _, start_idxes = torch.topk(s_log, n_best_size)
+        _, end_idxes = torch.topk(e_log, n_best_size)
 
         for s in start_idxes:
             for e in end_idxes:
