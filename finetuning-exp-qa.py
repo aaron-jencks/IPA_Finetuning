@@ -226,6 +226,8 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
             cfg, examples, features, eval_pred.predictions,
         )
 
+        gold_texts_arr = examples[efeat]
+
         logger.info('building metric arrays')
         # Build HF metric inputs
         preds = []
@@ -233,7 +235,7 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
         for i, eid in enumerate(examples["id"]):
             pred_text = predictions.get(eid, "")
 
-            gold_texts = examples[efeat][i]["text"]
+            gold_texts = gold_texts_arr[i]["text"]
 
             preds.append({"id": eid, "prediction_text": pred_text})
             refs.append({"id": eid, "answers": {
