@@ -146,6 +146,8 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
     n_best_size = hyperparameters['top_k']
     max_answer_length = hyperparameters['max_answer_length']
 
+    logger.info(f'evaluating top {n_best_size} indices')
+
     if len(raw_predictions) == 2:
         start_logits, end_logits = raw_predictions
     elif len(raw_predictions) == 3:
