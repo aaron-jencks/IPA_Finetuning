@@ -62,4 +62,5 @@ def setup_default_args(ap: ArgumentParser) -> ArgumentParser:
     ap.add_argument('--language-database', type=pathlib.Path, default=pathlib.Path('config/language-database.json'),
                     help='path to the default config file')
     ap.add_argument('--cpus', type=int, default=os.cpu_count(), help='number of cpus')
+    ap.add_argument('--debug', action='store_true', help='enable debug mode')
     return ap

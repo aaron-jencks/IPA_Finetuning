@@ -243,7 +243,7 @@ def concatenate_datasets_reenumerate_ids(
 def do_train_run(
         cfg: dict, db: dict,
         train_langs: List[str], eval_langs: List[str], model_type: str,
-        cpus: int = os.cpu_count()
+        cpus: int = os.cpu_count(), debug: bool = False,
 ) -> dict:
     device = 'cpu' if not torch.cuda.is_available() or cfg['cpu_only'] else 'cuda'
     logger.info(f'Using device "{device}"')
@@ -315,7 +315,7 @@ def do_train_run(
         fp16=True,
         warmup_ratio=hyperparameters["warmup_ratio"],
         save_safetensors=False,
-        disable_tqdm=True,
+        disable_tqdm=not debug,
         no_cuda=cfg["cpu_only"],
     )
 
@@ -376,5 +376,5 @@ if __name__ == "__main__":
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
     for mt in args.model_type:
-        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt, args.cpus)
+        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt, args.cpus, args.debug)
 
