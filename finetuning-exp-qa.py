@@ -233,7 +233,7 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
         refs  = []
         pbar = None
         if debug:
-            pbar = tqdm(total=len(examples['id']))
+            pbar = tqdm(total=len(examples['id']), desc='building metric arrays')
         for i, eid in enumerate(examples["id"]):
             pred_text = predictions.get(eid, "")
 
