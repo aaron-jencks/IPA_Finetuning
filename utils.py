@@ -16,21 +16,15 @@ from tokenizer import eod_token
 logger = logging.getLogger(__name__)
 
 
-class SampledDataset(Dataset):
-    def __init__(self, inner: Dataset, samples: int):
-        self.inner = inner
-        if samples > len(self.inner):
-            logger.warning(f'sample size > population size: {samples} > {len(self.inner)}')
-        self.samples = samples
-        self.idx_map = list(range(len(self.inner)))
-        if self.samples < len(self.inner):
-            self.idx_map = random.sample(self.idx_map, self.samples)
-
-    def __len__(self):
-        return len(self.idx_map)
-
-    def __getitem__(self, idx: int):
-        return self.inner[self.idx_map[idx]]
+def create_downsampled_dataset(ds: Dataset, samples: int) -> Dataset:
+    if samples > len(ds):
+        logger.warning(f'sample size > population size: {samples} > {len(ds)}')
+    if samples == len(ds):
+        return ds
+    idxes = list(range(len(ds)))
+    sampled_idxs = random.sample(idxes, samples)
+    downsample = ds.select(sampled_idxs)
+    return downsample
 
 
 def load_pretrained_model(path: pathlib.Path, device: str = 'cuda') -> GPT:

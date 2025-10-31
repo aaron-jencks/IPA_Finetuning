@@ -17,7 +17,7 @@ import config
 from hf_wrapper import GPTForQuestionAnswering
 from tokenizer import load_tokenizer
 import utils
-from utils import load_pretrained_model, SampledDataset
+from utils import load_pretrained_model, create_downsampled_dataset
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -309,7 +309,7 @@ def do_train_run(
     train_eval_dataset_name = sorted(list(eval_datasets.keys()), key=lambda k: len(eval_datasets[k]))[0]
     logger.info(f'using "{train_eval_dataset_name}" for trainning evaluation because it\'s the shortest')
     train_eval_dataset = eval_datasets[train_eval_dataset_name]
-    train_eval_dataset = SampledDataset(train_eval_dataset, eval_samples)
+    train_eval_dataset = create_downsampled_dataset(train_eval_dataset, eval_samples)
 
     logger.info('creating metrics function')
 
