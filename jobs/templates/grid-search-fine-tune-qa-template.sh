@@ -31,7 +31,7 @@ cd "$repo_dir"
 echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
-TQDM_DISABLE=1 python finetuning-exp.py \
+TQDM_DISABLE=1 python finetuning-exp-qa.py \
   "$SLURM_JOB_ID" --cpus {cpus} {args}
 
 echo "===== [$(date)] CLEANING UP ====="
