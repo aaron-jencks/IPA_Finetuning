@@ -10,7 +10,6 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from transformers import Trainer, TrainingArguments, DataCollatorWithPadding
-from transformers.modeling_outputs import QuestionAnsweringModelOutput
 import wandb
 
 import config
@@ -205,7 +204,8 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
 
 # 2) Factory that returns a compute_metrics compatible with Trainer
 def make_qa_compute_metrics(cfg, db, lang, examples, features,
-                            n_best_size=20, max_answer_length=30):
+                            n_best_size=20, max_answer_length=30,
+                            debug: bool = False):
     """
     examples: the *original* eval split (with 'id', 'context', 'answers')
     features: the tokenized eval features you pass to Trainer (must include 'example_id' and 'offset_mapping')
@@ -231,6 +231,9 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
         # Build HF metric inputs
         preds = []
         refs  = []
+        pbar = None
+        if debug:
+            pbar = tqdm(total=len(examples['id']))
         for i, eid in enumerate(examples["id"]):
             pred_text = predictions.get(eid, "")
 
@@ -241,6 +244,11 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
                 "text": gold_texts,
                 "answer_start": examples[efeat][i]["answer_start"],
             }})
+
+            if pbar is not None:
+                pbar.update(1)
+        if pbar is not None:
+            pbar.close()
 
         logger.info('computing metrics')
         return metric.compute(predictions=preds, references=refs)
@@ -317,6 +325,7 @@ def do_train_run(
         cfg, db, train_eval_dataset_name,
         train_eval_dataset,
         train_eval_dataset,
+        debug=debug,
     )
 
     logger.info('setting up model wrapper')
@@ -386,6 +395,7 @@ def do_train_run(
         metrics = make_qa_compute_metrics(
             cfg, db, train_eval_dataset_name,
             eval_dataset, eval_dataset,
+            debug=debug,
         )
         trainer.compute_metrics = metrics
         metric_prefix = f'eval_{eval_lang}'
