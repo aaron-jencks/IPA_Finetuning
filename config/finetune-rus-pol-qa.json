@@ -10,7 +10,7 @@
     "warmup_ratio": 0.05,
     "batch_size": 32,
     "max_answer_length": 471,
-    "top_k": 5
+    "top_k": 20
   },
   "wandb": {
     "project": "rus-pol-finetuning-qa-gridsearch"
