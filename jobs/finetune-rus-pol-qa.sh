@@ -20,10 +20,12 @@ echo "Python: $(which python) ($(python --version))"
 
 train_lang="both"
 model_type="normal"
+eval_samples=1000
 for arg in "$@"; do
   case $arg in
     --train-lang=*) train_lang="${arg#*=}";;
     --model-type=*) model_type="${arg#*=}";;
+    --eval-samples=*) eval_samples="${arg#*=}";;
     *)
       echo "unknown argument: $arg"
       exit 1
@@ -49,6 +51,8 @@ echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 # Run the actual script
 python finetuning-exp-qa.py \
   "$SLURM_JOB_ID" config/finetune-rus-pol.json config/finetune-rus-pol-qa.json \
-  --train-langs $train_lang --eval-langs $eval_lang --model-type $model_type --debug --cpus 16
+  --train-langs $train_lang --eval-langs $eval_lang --model-type $model_type \
+  --train-eval-size $eval_samples \
+  --debug --cpus 16
 
 echo "===== [$(date)] JOB COMPLETED ====="

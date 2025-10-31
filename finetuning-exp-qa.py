@@ -17,8 +17,7 @@ import config
 from hf_wrapper import GPTForQuestionAnswering
 from tokenizer import load_tokenizer
 import utils
-from utils import load_pretrained_model
-
+from utils import load_pretrained_model, SampledDataset
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -263,6 +262,7 @@ def concatenate_datasets_reenumerate_ids(
 def do_train_run(
         cfg: dict, db: dict,
         train_langs: List[str], eval_langs: List[str], model_type: str,
+        eval_samples: int,
         cpus: int = os.cpu_count(), debug: bool = False,
 ) -> dict:
     device = 'cpu' if not torch.cuda.is_available() or cfg['cpu_only'] else 'cuda'
@@ -309,6 +309,7 @@ def do_train_run(
     train_eval_dataset_name = sorted(list(eval_datasets.keys()), key=lambda k: len(eval_datasets[k]))[0]
     logger.info(f'using "{train_eval_dataset_name}" for trainning evaluation because it\'s the shortest')
     train_eval_dataset = eval_datasets[train_eval_dataset_name]
+    train_eval_dataset = SampledDataset(train_eval_dataset, eval_samples)
 
     logger.info('creating metrics function')
 
@@ -408,9 +409,11 @@ if __name__ == "__main__":
     ap.add_argument('--train-langs', nargs='+', type=str, help='The languages to train on')
     ap.add_argument('--eval-langs', nargs='+', type=str, help='The languages to evaluate on')
     ap.add_argument('--model-type', type=str, nargs='+', default=['normal', 'ipa'], help='The model type')
+    ap.add_argument('--training-eval-size', type=int, default=1000,
+                    help='The number of records to sample from the eval dataset to use while training')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
     for mt in args.model_type:
-        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt, args.cpus, args.debug)
+        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt, args.training_eval_size, args.cpus, args.debug)
 
