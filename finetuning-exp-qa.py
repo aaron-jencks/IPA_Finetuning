@@ -47,8 +47,8 @@ def get_fields(settings: dict, model_type: str) -> List[str]:
     return feats
 
 
-def format_qa_string(q: str, c: str, sep: str) -> str:
-    return f'{sep} {q} {sep} {c} {sep}'
+def format_qa_string(q: str, c: str, sep: str) -> Tuple[str, int]:
+    return f'{sep} {q} {sep} {c} {sep}', len(q) + len(sep) * 2 + 3
 
 
 def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type, cpus: int = os.cpu_count()) -> Dataset:
@@ -62,11 +62,19 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type,
     fields = get_fields(dataset_settings, model_type)
     q_feat = fields[0]
     c_feat = fields[1]
+    eval_feat = dataset_settings["eval_feature"]
 
     def preprocess(examples):
-        strings = [format_qa_string(q, c, tokenizer.eos_token) for q, c in zip(examples[q_feat], examples[c_feat])]
+        strings = []
+        answers = []
+        for q, c, a in zip(examples[q_feat], examples[c_feat], examples[eval_feat]):
+            s, off = format_qa_string(q, c, tokenizer.eos_token)
+            strings.append(s)
+            a['answer_start'][0] += off
+            answers.append(a)
         return {
             'formatted_strings': strings,
+            eval_feat: answers,
         }
 
     ds_pre = ds.map(preprocess, batched=True, num_proc=cpus)
@@ -92,7 +100,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type,
         )
 
         offset_mapping = inputs["offset_mapping"]
-        answers = examples[dataset_settings["eval_feature"]]
+        answers = examples[eval_feat]
         start_positions = []
         end_positions = []
 
