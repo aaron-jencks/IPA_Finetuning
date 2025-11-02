@@ -109,7 +109,7 @@ class GPTForQuestionAnswering(nn.Module):
         non_pad_mask = (input_ids != self.pad_token_id).to(logits.device, torch.int32)  # (B, L)
         token_indices = torch.arange(input_ids.shape[-1], device=logits.device, dtype=torch.int32)  # (L,)
         last_non_pad_token = (token_indices * non_pad_mask).argmax(-1)  # (B,)
-        mask = (token_indices.unsqueeze(0) >= last_non_pad_token.unsqueeze(1)).int()  # (B, L)
+        mask = (token_indices.unsqueeze(0) >= last_non_pad_token.unsqueeze(1))  # (B, L)
 
         very_neg = torch.finfo(start_logits.dtype).min
         start_logits = start_logits.masked_fill(mask, very_neg)
