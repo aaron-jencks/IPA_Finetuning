@@ -105,11 +105,15 @@ class GPTForQuestionAnswering(nn.Module):
         start_logits = start_logits.squeeze(-1)  # (B,L)
         end_logits = end_logits.squeeze(-1)  # (B,L)
 
-        invalid = input_ids.eq(self.pad_token_id)
+        # To handle both left- and right- padding, we take the rightmost token that is not equal to pad_token_id
+        non_pad_mask = (input_ids != self.pad_token_id).to(logits.device, torch.int32)  # (B, L)
+        token_indices = torch.arange(input_ids.shape[-1], device=logits.device, dtype=torch.int32)  # (L,)
+        last_non_pad_token = (token_indices * non_pad_mask).argmax(-1)  # (B,)
+        mask = (token_indices.unsqueeze(0) >= last_non_pad_token.unsqueeze(1)).int()  # (B, L)
 
         very_neg = torch.finfo(start_logits.dtype).min
-        start_logits = start_logits.masked_fill(invalid, very_neg)
-        end_logits = end_logits.masked_fill(invalid, very_neg)
+        start_logits = start_logits.masked_fill(mask, very_neg)
+        end_logits = end_logits.masked_fill(mask, very_neg)
 
         loss = None
         if start_positions is not None and end_positions is not None:
