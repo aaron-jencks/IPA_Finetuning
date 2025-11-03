@@ -31,7 +31,7 @@ cd "$repo_dir"
 echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
-TQDM_DISABLE=1 python finetuning-exp-qa.py \
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:1 TQDM_DISABLE=1 python finetuning-exp-qa.py \
   "$SLURM_JOB_ID" --cpus {cpus} {args}
 
 echo "===== [$(date)] CLEANING UP ====="
