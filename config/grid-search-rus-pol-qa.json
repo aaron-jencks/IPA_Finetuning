@@ -1,12 +1,12 @@
 {
   "parameters" : {
-    "learning_rate": [1e-3, 1e-4, 1e-5, 1e-6],
-    "batch_size": [16, 32, 64],
-    "warmup_ratio": [0.0, 0.1, 0.2, 0.3],
-    "epochs": [3, 5]
+    "learning_rate": [7.5e-5, 5e-5, 1e-5],
+    "batch_size": [32, 64, 128],
+    "warmup_ratio": [0.2, 0.225],
+    "epochs": [2, 3]
   },
   "languages": {
     "train": "all",
-    "eval": "russian"
+    "eval": "polish"
   }
 }
