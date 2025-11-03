@@ -162,7 +162,7 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
 
     logger.info('extracting contexts and offsets')
 
-    contexts = examples["context"]
+    contexts = examples["formatted_strings"]
     offset_maps = features["offset_mapping"]
 
     if len(raw_predictions) == 2:
