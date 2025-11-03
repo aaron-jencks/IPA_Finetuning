@@ -265,10 +265,7 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
             pbar = tqdm(total=len(examples['id']), desc='building metric arrays')
         for i, eid in enumerate(examples["id"]):
             pred_answers = predictions.get(
-                eid, {
-                    'answers': {},
-                    'best_idx': -1,
-                }
+                eid, None
             )
             pred_answer = pred_answers['answers'][pred_answers['best_idx']]
             pred_text = pred_answer['text']
@@ -281,6 +278,9 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
                 logger.info('tried answers:')
                 for s_index in pred_answers['answers'].keys():
                     ans = pred_answers['answers'][s_index]
+                    if ans is None:
+                        logger.info(f'no answer found for {s_index}')
+                        continue
                     logger.info(f'\t"{ans["text"]}" {ans["start"]} score: {ans["score"]}')
 
             preds.append({"id": str(eid), "prediction_text": pred_text})
