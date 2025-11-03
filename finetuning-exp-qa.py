@@ -187,13 +187,14 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
 
         first_score = True
         best_score, best_idx = -1e9, -1
-        tried_answers = []
+        tried_answers = {}
 
         # top-k search that enforces e >= s and max_answer_length
         start_idxes = numpy_topk(s_log, n_best_size)
         end_idxes = numpy_topk(e_log, n_best_size)
 
         for s in start_idxes:
+            tried_answers[s] = None
             for e in end_idxes:
                 if e < s:
                     continue
@@ -204,16 +205,18 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
                     continue  # skip non-context/special/pad
                 score = s_log[s] + e_log[e]
                 text = context[s_off[0]:e_off[1]]
-                tried_answers.append({
+                answer_dict = {
                     'start': s_off[0],
                     'end': e_off[1],
                     'text': text,
                     'score': score,
-                })
+                }
+                if tried_answers[s] is None or score > tried_answers[s]['score']:
+                    tried_answers[s] = answer_dict
                 if first_score or score > best_score:
                     first_score = False
                     best_score = score
-                    best_idx = len(tried_answers) - 1
+                    best_idx = s
 
         ex_key = examples["id"][i] if use_ids else str(i)
         preds[ex_key] = {
@@ -263,7 +266,7 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
         for i, eid in enumerate(examples["id"]):
             pred_answers = predictions.get(
                 eid, {
-                    'answers': [],
+                    'answers': {},
                     'best_idx': -1,
                 }
             )
@@ -276,7 +279,8 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
             if debug and eid in sample_preds:
                 logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}" ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
                 logger.info('tried answers:')
-                for ans in pred_answers['answers']:
+                for s_index in pred_answers['answers'].keys():
+                    ans = pred_answers['answers'][s_index]
                     logger.info(f'\t"{ans["text"]}" {ans["start"]} score: {ans["score"]}')
 
             preds.append({"id": str(eid), "prediction_text": pred_text})
