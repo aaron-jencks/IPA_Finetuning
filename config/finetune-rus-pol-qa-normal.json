@@ -13,6 +13,6 @@
     "top_k": 20
   },
   "wandb": {
-    "project": "rus-pol-finetuning-qa-gridsearch"
+    "project": "rus-pol-finetuning-qa"
   }
 }
