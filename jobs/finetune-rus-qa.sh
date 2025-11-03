@@ -1,0 +1,51 @@
+#!/bin/bash
+#SBATCH --job-name=gpt2_finetune_rus_pol_qa
+#SBATCH --account=PAS2836
+#SBATCH --output=/fs/ess/PAS2836/ipa_gpt/jobs/logs/%x-%j.out
+#SBATCH --error=/fs/ess/PAS2836/ipa_gpt/jobs/logs/errors/%x-%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=02:00:00
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --gpus-per-node=1
+
+echo "===== [$(date)] JOB STARTED ====="
+
+# Load required modules
+module load miniconda3/24.1.2-py310 cuda/12.4.1
+conda init bash
+conda activate nanogpt_cu124  # TODO change this to your personal environment
+
+echo "Python: $(which python) ($(python --version))"
+
+eval_samples=1000
+for arg in "$@"; do
+  case $arg in
+    --eval-samples=*) eval_samples="${arg#*=}";;
+    *)
+      echo "unknown argument: $arg"
+      exit 1
+      ;;
+  esac
+done
+
+# setup paths
+scratch_prefix="/fs/scratch/PAS2836/ipa_gpt"
+scratch_github_prefix="$scratch_prefix/github"
+scratch_hf_cache_prefix="$scratch_prefix/cache"
+mkdir -pv $scratch_github_prefix $scratch_hf_cache_prefix
+
+repo_name="IPA_Finetuning"
+repo_dir="$scratch_github_prefix/$repo_name"
+cd "$repo_dir"
+
+echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
+
+# Run the actual script
+python finetuning-exp-qa.py \
+  "$SLURM_JOB_ID" config/finetune-rus-pol.json config/finetune-rus-pol-qa.json \
+  --train-langs "russian" --eval-langs "russian" --model-type "normal" \
+  --training-eval-size $eval_samples \
+  --cpus 16 --debug
+
+echo "===== [$(date)] JOB COMPLETED ====="
