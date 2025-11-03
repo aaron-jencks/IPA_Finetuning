@@ -48,6 +48,14 @@ def get_fields(settings: dict, model_type: str) -> List[str]:
     return feats
 
 
+def get_eval_fields(settings: dict, model_type: str) -> str:
+    feat = settings["eval_feature"]
+    if model_type == "ipa":
+        feat += '-phoneme'
+    logger.info(f'Using eval feature: {feat}')
+    return feat
+
+
 def format_qa_string(q: str, c: str, sep: str) -> Tuple[str, int]:
     return f'{sep} {q} {sep} {c} {sep}', len(q) + len(sep) * 2 + 3
 
@@ -63,7 +71,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type,
     fields = get_fields(dataset_settings, model_type)
     q_feat = fields[0]
     c_feat = fields[1]
-    eval_feat = dataset_settings["eval_feature"]
+    eval_feat = get_eval_fields(dataset_settings, model_type)
 
     def preprocess(examples):
         strings = []
@@ -228,7 +236,7 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
 
 
 # 2) Factory that returns a compute_metrics compatible with Trainer
-def make_qa_compute_metrics(cfg, db, lang, examples, features,
+def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
                             n_best_size=20, max_answer_length=30,
                             debug: bool = False):
     """
@@ -238,7 +246,7 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
     normalizer: optional callable to normalize strings (e.g., your IPA normalizer)
     """
     dataset_settings = db[lang][cfg["task"]][cfg["datasets"][lang]]
-    efeat = dataset_settings['eval_feature']
+    efeat = get_eval_fields(dataset_settings, model_type)
     metric = evaluate.load("squad")
     id_to_row = {ex["id"]: ex for ex in examples}
 
@@ -253,7 +261,6 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
 
         if debug:
             sample_preds = set(random.sample(list(predictions.keys()), 5))
-
 
         gold_texts_arr = examples[efeat]
 
@@ -371,6 +378,7 @@ def do_train_run(
 
     metrics = make_qa_compute_metrics(
         cfg, db, train_eval_dataset_name,
+        model_type,
         train_eval_dataset,
         train_eval_dataset,
         debug=debug,
@@ -444,6 +452,7 @@ def do_train_run(
     for eval_lang, eval_dataset in eval_datasets.items():
         metrics = make_qa_compute_metrics(
             cfg, db, train_eval_dataset_name,
+            model_type,
             eval_dataset, eval_dataset,
             debug=debug,
         )
