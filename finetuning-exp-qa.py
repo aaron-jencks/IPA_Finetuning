@@ -261,13 +261,14 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
         if debug:
             pbar = tqdm(total=len(examples['id']), desc='building metric arrays')
         for i, eid in enumerate(examples["id"]):
-            pred_answer = predictions.get(
+            pred_answers = predictions.get(
                 eid, {
                     'answers': [],
                     'best_idx': -1,
                 }
             )
-            pred_text = pred_answer['answers'][pred_answer['best_idx']]['text']
+            pred_answer = pred_answers['answers'][pred_answers['best_idx']]
+            pred_text = pred_answer['text']
 
             answer = gold_texts_arr[i]
             gold_texts = answer["text"]
@@ -275,7 +276,7 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
             if debug and eid in sample_preds:
                 logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}" ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
                 logger.info('tried answers:')
-                for ans in pred_answer['answers']:
+                for ans in pred_answers['answers']:
                     logger.info(f'\t"{ans["text"]}" {ans["start"]} score: {ans["score"]}')
 
             preds.append({"id": str(eid), "prediction_text": pred_text})
