@@ -240,6 +240,7 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
     dataset_settings = db[lang][cfg["task"]][cfg["datasets"][lang]]
     efeat = dataset_settings['eval_feature']
     metric = evaluate.load("squad")
+    id_to_row = {ex["id"]: ex for ex in examples}
 
     def compute_metrics(eval_pred):
         # eval_pred.predictions is (start_logits, end_logits)
@@ -274,6 +275,8 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
             gold_texts = answer["text"]
 
             if debug and eid in sample_preds:
+                ex_row = id_to_row[eid]
+                logger.info(f'{str(eid)} gold: {ex_row["formatted_strings"]}')
                 logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}" ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
                 logger.info('tried answers:')
                 for s_index in pred_answers['answers'].keys():
