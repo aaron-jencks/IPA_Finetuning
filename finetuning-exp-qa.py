@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import pathlib
+import random
 from typing import Tuple, List
 
 from datasets import load_dataset, concatenate_datasets, Dataset, Value
@@ -184,7 +185,8 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
         s_log = start_logits[i]
         e_log = end_logits[i]
 
-        best_text, best_score = "", -1e9
+        first_score = True
+        best_text, best_score, best_start, best_end = "", -1e9, -1, -1
 
         # top-k search that enforces e >= s and max_answer_length
         start_idxes = numpy_topk(s_log, n_best_size)
@@ -200,12 +202,20 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
                 if s_off == (0, 0) or e_off == (0, 0):
                     continue  # skip non-context/special/pad
                 score = s_log[s] + e_log[e]
-                if score > best_score:
+                if first_score or score > best_score:
+                    first_score = False
                     best_score = score
+                    best_start = s_off[0]
+                    best_end = e_off[1]
                     best_text = context[s_off[0]:e_off[1]]
 
         ex_key = examples["id"][i] if use_ids else str(i)
-        preds[ex_key] = best_text if best_text is not None else ""
+        preds[ex_key] = {
+            'start': best_start,
+            'end': best_end,
+            'text': best_text,
+            'score': best_score,
+        }
 
     return preds
 
@@ -233,6 +243,10 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
             cfg, examples, features, eval_pred.predictions,
         )
 
+        if debug:
+            sample_preds = set(random.sample(list(predictions.keys()), 5))
+
+
         gold_texts_arr = examples[efeat]
 
         logger.info('building metric arrays')
@@ -243,14 +257,18 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
         if debug:
             pbar = tqdm(total=len(examples['id']), desc='building metric arrays')
         for i, eid in enumerate(examples["id"]):
-            pred_text = predictions.get(eid, "")
+            pred_text = predictions.get(eid, {'text': ''})['text']
 
-            gold_texts = gold_texts_arr[i]["text"]
+            answer = gold_texts_arr[i]
+            gold_texts = answer["text"]
+
+            if debug and eid in sample_preds:
+                logger.info(f'{str(eid)}: {pred_text} vs {gold_texts[0]}')
 
             preds.append({"id": str(eid), "prediction_text": pred_text})
             refs.append({"id": str(eid), "answers": {
                 "text": gold_texts,
-                "answer_start": examples[efeat][i]["answer_start"],
+                "answer_start": answer["answer_start"],
             }})
 
             if pbar is not None:
