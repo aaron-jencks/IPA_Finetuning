@@ -315,6 +315,7 @@ def concatenate_datasets_reenumerate_ids(
 
 
 def do_train_run(
+        job_number: str,
         cfg: dict, db: dict,
         train_langs: List[str], eval_langs: List[str], model_type: str,
         eval_samples: int,
@@ -412,6 +413,8 @@ def do_train_run(
 
     logger.info('starting wandb')
 
+    hyperparameters['job_number'] = job_number
+
     # run training
     wandb_settings = cfg["wandb"]
     wrun = wandb.init(
@@ -472,5 +475,5 @@ if __name__ == "__main__":
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
     for mt in args.model_type:
-        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt, args.training_eval_size, args.cpus, args.debug)
+        do_train_run(args.job_number, cfg, db, args.train_langs, args.eval_langs, mt, args.training_eval_size, args.cpus, args.debug)
 
