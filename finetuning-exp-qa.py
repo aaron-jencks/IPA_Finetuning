@@ -186,7 +186,8 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
         e_log = end_logits[i]
 
         first_score = True
-        best_text, best_score, best_start, best_end = "", -1e9, -1, -1
+        best_score, best_idx = -1e9, -1
+        tried_answers = []
 
         # top-k search that enforces e >= s and max_answer_length
         start_idxes = numpy_topk(s_log, n_best_size)
@@ -202,19 +203,22 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
                 if s_off == (0, 0) or e_off == (0, 0):
                     continue  # skip non-context/special/pad
                 score = s_log[s] + e_log[e]
+                text = context[s_off[0]:e_off[1]]
+                tried_answers.append({
+                    'start': s_off[0],
+                    'end': e_off[1],
+                    'text': text,
+                    'score': score,
+                })
                 if first_score or score > best_score:
                     first_score = False
                     best_score = score
-                    best_start = s_off[0]
-                    best_end = e_off[1]
-                    best_text = context[s_off[0]:e_off[1]]
+                    best_idx = len(tried_answers) - 1
 
         ex_key = examples["id"][i] if use_ids else str(i)
         preds[ex_key] = {
-            'start': best_start,
-            'end': best_end,
-            'text': best_text,
-            'score': best_score,
+            'answers': tried_answers,
+            'best_idx': best_idx,
         }
 
     return preds
@@ -257,13 +261,22 @@ def make_qa_compute_metrics(cfg, db, lang, examples, features,
         if debug:
             pbar = tqdm(total=len(examples['id']), desc='building metric arrays')
         for i, eid in enumerate(examples["id"]):
-            pred_text = predictions.get(eid, {'text': ''})['text']
+            pred_answer = predictions.get(
+                eid, {
+                    'answers': [],
+                    'best_idx': -1,
+                }
+            )
+            pred_text = pred_answer['answers'][pred_answer['best_idx']]['text']
 
             answer = gold_texts_arr[i]
             gold_texts = answer["text"]
 
             if debug and eid in sample_preds:
-                logger.info(f'{str(eid)}: {pred_text} vs {gold_texts[0]}')
+                logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}" ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
+                logger.info('tried answers:')
+                for ans in pred_answer['answers']:
+                    logger.info(f'\t"{ans["text"]}" {ans["start"]} score: {ans["score"]}')
 
             preds.append({"id": str(eid), "prediction_text": pred_text})
             refs.append({"id": str(eid), "answers": {
