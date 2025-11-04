@@ -218,6 +218,7 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
                     'end': e_off[1],
                     'text': text,
                     'score': score,
+                    'logits': (s_log, e_log),
                 }
                 if tried_answers[s] is None or score > tried_answers[s]['score']:
                     tried_answers[s] = answer_dict
@@ -285,6 +286,8 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
                 ex_row = id_to_row[eid]
                 logger.info(f'{str(eid)} gold: {ex_row["formatted_strings"]}')
                 logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}" ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
+                logger.info(f'{str(eid)}: start logits: {pred_answer["logits"][0]}')
+                logger.info(f'{str(eid)}: end logits: {pred_answer["logits"][1]}')
                 # logger.info('tried answers:')
                 # for s_index in pred_answers['answers'].keys():
                 #     ans = pred_answers['answers'][s_index]
