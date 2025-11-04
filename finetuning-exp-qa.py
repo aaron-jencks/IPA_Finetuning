@@ -3,7 +3,7 @@ import logging
 import os
 import pathlib
 import random
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 from datasets import load_dataset, concatenate_datasets, Dataset, Value
 import evaluate
@@ -330,6 +330,7 @@ def do_train_run(
         train_langs: List[str], eval_langs: List[str], model_type: str,
         eval_samples: int,
         cpus: int = os.cpu_count(), debug: bool = False,
+        eval_only: Optional[pathlib.Path] = None,
 ) -> dict:
     device = 'cpu' if not torch.cuda.is_available() or cfg['cpu_only'] else 'cuda'
     logger.info(f'Using device "{device}"')
@@ -341,7 +342,11 @@ def do_train_run(
     # load the model
     vocab_path, merges_path = get_tokenizer_paths(cfg, model_type)
     tokenizer = load_tokenizer(vocab_path, merges_path)
-    base_model = load_pretrained_model(get_checkpoint_path(cfg, model_type), device)
+    if eval_only is None:
+        checkpoint_path = get_checkpoint_path(cfg, model_type)
+    else:
+        checkpoint_path = eval_only
+    base_model = load_pretrained_model(checkpoint_path, device)
     base_model.config.pad_token_id = tokenizer.pad_token_id
     base_model.config.padding_side = tokenizer.padding_side
 
@@ -350,17 +355,20 @@ def do_train_run(
     # keep validation separate
     logger.info('loading training datasets')
 
-    train_datasets = []
-    for train_lang in train_langs:
-        dataset_settings = db[train_lang][cfg["task"]][cfg["datasets"][train_lang]]
-        if dataset_settings["task_type"] != "question-answering":
-            raise NotImplementedError("non-qa tasks are not supported")
-        ds = load_and_preprocess(cfg, db, train_lang, dataset_settings["splits"][0], tokenizer, model_type, cpus)
-        train_datasets.append(ds)
-    if len(train_datasets) > 0:
-        train_dataset = concatenate_datasets_reenumerate_ids(train_datasets, "id", cpus)
+    if eval_only is None:
+        train_datasets = []
+        for train_lang in train_langs:
+            dataset_settings = db[train_lang][cfg["task"]][cfg["datasets"][train_lang]]
+            if dataset_settings["task_type"] != "question-answering":
+                raise NotImplementedError("non-qa tasks are not supported")
+            ds = load_and_preprocess(cfg, db, train_lang, dataset_settings["splits"][0], tokenizer, model_type, cpus)
+            train_datasets.append(ds)
+        if len(train_datasets) > 0:
+            train_dataset = concatenate_datasets_reenumerate_ids(train_datasets, "id", cpus)
+        else:
+            train_dataset = train_datasets[0]
     else:
-        train_dataset = train_datasets[0]
+        train_dataset = None
 
     logger.info('loading eval datasets')
 
@@ -372,20 +380,24 @@ def do_train_run(
         ds = load_and_preprocess(cfg, db, eval_lang, dataset_settings["splits"][1], tokenizer, model_type, cpus)
         eval_datasets[eval_lang] = ds
 
-    train_eval_dataset_name = sorted(list(eval_datasets.keys()), key=lambda k: len(eval_datasets[k]))[0]
-    logger.info(f'using "{train_eval_dataset_name}" for trainning evaluation because it\'s the shortest')
-    train_eval_dataset = eval_datasets[train_eval_dataset_name]
-    train_eval_dataset = create_downsampled_dataset(train_eval_dataset, eval_samples)
+    if eval_only is None:
+        train_eval_dataset_name = sorted(list(eval_datasets.keys()), key=lambda k: len(eval_datasets[k]))[0]
+        logger.info(f'using "{train_eval_dataset_name}" for trainning evaluation because it\'s the shortest')
+        train_eval_dataset = eval_datasets[train_eval_dataset_name]
+        train_eval_dataset = create_downsampled_dataset(train_eval_dataset, eval_samples)
 
-    logger.info('creating metrics function')
+        logger.info('creating metrics function')
 
-    metrics = make_qa_compute_metrics(
-        cfg, db, train_eval_dataset_name,
-        model_type,
-        train_eval_dataset,
-        train_eval_dataset,
-        debug=debug,
-    )
+        metrics = make_qa_compute_metrics(
+            cfg, db, train_eval_dataset_name,
+            model_type,
+            train_eval_dataset,
+            train_eval_dataset,
+            debug=debug,
+        )
+    else:
+        train_eval_dataset = None
+        metrics = None
 
     logger.info('setting up model wrapper')
 
@@ -429,13 +441,16 @@ def do_train_run(
     hyperparameters['checkpoint_location'] = temporary_output_dir
 
     # run training
-    wandb_settings = cfg["wandb"]
-    wrun = wandb.init(
-        entity=wandb_settings["entity"],
-        project=wandb_settings["project"],
-        name=run_name,
-        config=hyperparameters,
-    )
+    if eval_only is None:
+        wandb_settings = cfg["wandb"]
+        wrun = wandb.init(
+            entity=wandb_settings["entity"],
+            project=wandb_settings["project"],
+            name=run_name,
+            config=hyperparameters,
+        )
+    else:
+        wrun = None
 
     trainer = Trainer(
         model=model,
@@ -447,16 +462,17 @@ def do_train_run(
         compute_metrics=metrics,
     )
 
-    logger.info("starting training")
-    results = trainer.train()
-    logger.info("finished training")
-    logger.info(f'Results: {results}')
+    if eval_only is None:
+        logger.info("starting training")
+        results = trainer.train()
+        logger.info("finished training")
+        logger.info(f'Results: {results}')
 
     # evaluate on each output language
     f1_results = {}
     for eval_lang, eval_dataset in eval_datasets.items():
         metrics = make_qa_compute_metrics(
-            cfg, db, train_eval_dataset_name,
+            cfg, db, eval_lang,
             model_type,
             eval_dataset, eval_dataset,
             debug=debug,
@@ -471,7 +487,8 @@ def do_train_run(
         logger.info(str(lang_results))
         f1_results[eval_lang] = lang_results[f'{metric_prefix}_f1']
 
-    wrun.finish()
+    if wrun is not None:
+        wrun.finish()
 
     # return best f1 score
     return f1_results
@@ -485,6 +502,7 @@ if __name__ == "__main__":
     ap.add_argument('--model-type', type=str, nargs='+', default=['normal', 'ipa'], help='The model type')
     ap.add_argument('--training-eval-size', type=int, default=1000,
                     help='The number of records to sample from the eval dataset to use while training')
+    ap.add_argument('--eval-only', type=pathlib.Path, default=None, help='If supplied, specifies a checkpoint to evaluate, training is skipped')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
