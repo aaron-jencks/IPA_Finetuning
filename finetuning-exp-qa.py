@@ -457,21 +457,23 @@ def do_train_run(
     else:
         wrun = None
 
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=train_eval_dataset,
-        tokenizer=tokenizer,
-        data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
-        compute_metrics=metrics,
-    )
-
     if eval_only is None:
+        trainer = Trainer(
+            model=model,
+            args=training_args,
+            train_dataset=train_dataset,
+            eval_dataset=train_eval_dataset,
+            tokenizer=tokenizer,
+            data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
+            compute_metrics=metrics,
+        )
+
         logger.info("starting training")
         results = trainer.train()
         logger.info("finished training")
         logger.info(f'Results: {results}')
+    else:
+        trainer = None
 
     # evaluate on each output language
     f1_results = {}
@@ -482,7 +484,18 @@ def do_train_run(
             eval_dataset, eval_dataset,
             debug=debug,
         )
-        trainer.compute_metrics = metrics
+        if trainer is None:
+            trainer = Trainer(
+                model=model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                tokenizer=tokenizer,
+                data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
+                compute_metrics=metrics,
+            )
+        else:
+            trainer.compute_metrics = metrics
         metric_prefix = f'eval_{eval_lang}'
         lang_results = trainer.evaluate(
             eval_dataset=eval_dataset,
