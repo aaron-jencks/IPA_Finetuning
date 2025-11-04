@@ -242,6 +242,15 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
     return preds
 
 
+def truncate_list_output(l: list) -> list:
+    current = -1
+    if l[current] != -65504.:
+        return l
+    while l[current] == -65504.:
+        current -= 1
+    return l[:current+1]
+
+
 # 2) Factory that returns a compute_metrics compatible with Trainer
 def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
                             n_best_size=20, max_answer_length=30,
@@ -293,8 +302,8 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
                 logger.info(f'{str(eid)} gold: {ex_row["formatted_strings"]}')
                 logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}" ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
                 # torch.set_printoptions(threshold=float('inf'))
-                logger.info(f'{str(eid)}: start logits: {pred_answer["logits"][0].tolist()}')
-                logger.info(f'{str(eid)}: end logits: {pred_answer["logits"][1].tolist()}')
+                logger.info(f'{str(eid)}: start logits: {truncate_list_output(pred_answer["logits"][0].tolist())}')
+                logger.info(f'{str(eid)}: end logits: {truncate_list_output(pred_answer["logits"][1].tolist())}')
                 # torch.set_printoptions(profile="default")
                 # logger.info('tried answers:')
                 # for s_index in pred_answers['answers'].keys():
