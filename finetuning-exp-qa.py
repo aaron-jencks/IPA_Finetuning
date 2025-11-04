@@ -23,6 +23,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def load_pretrained_trainer_model(path: pathlib.Path, base_model: GPTForQuestionAnswering, device: str = 'cuda') -> GPTForQuestionAnswering:
+    state_dict = torch.load(path, map_location=device)
+    base_model.load_state_dict(state_dict, strict=True)
+    return base_model
+
+
 def get_checkpoint_path(cfg: dict, type: str) -> pathlib.Path:
     checkpoint_settings = cfg["checkpoints"]
     prefix_path = pathlib.Path(checkpoint_settings["prefix"]) / checkpoint_settings[type]
@@ -342,10 +348,7 @@ def do_train_run(
     # load the model
     vocab_path, merges_path = get_tokenizer_paths(cfg, model_type)
     tokenizer = load_tokenizer(vocab_path, merges_path)
-    if eval_only is None:
-        checkpoint_path = get_checkpoint_path(cfg, model_type)
-    else:
-        checkpoint_path = eval_only
+    checkpoint_path = get_checkpoint_path(cfg, model_type)
     base_model = load_pretrained_model(checkpoint_path, device)
     base_model.config.pad_token_id = tokenizer.pad_token_id
     base_model.config.padding_side = tokenizer.padding_side
@@ -402,6 +405,8 @@ def do_train_run(
     logger.info('setting up model wrapper')
 
     model = GPTForQuestionAnswering(base_model).to(device)
+    if eval_only is not None:
+        model = load_pretrained_trainer_model(eval_only, model, device)
 
     logger.info('configuring training args')
 
@@ -502,7 +507,7 @@ if __name__ == "__main__":
     ap.add_argument('--model-type', type=str, nargs='+', default=['normal', 'ipa'], help='The model type')
     ap.add_argument('--training-eval-size', type=int, default=1000,
                     help='The number of records to sample from the eval dataset to use while training')
-    ap.add_argument('--eval-only', type=pathlib.Path, default=None, help='If supplied, specifies a checkpoint to evaluate, training is skipped')
+    ap.add_argument('--eval-only', type=pathlib.Path, default=None, help='If supplied, specifies a checkpoint to evaluate, training is skipped, assumes that it is a trainer checkpoint')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
