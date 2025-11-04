@@ -253,6 +253,7 @@ def truncate_list_output(l: list) -> list:
 
 # 2) Factory that returns a compute_metrics compatible with Trainer
 def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
+                            sample_rows: List[int],
                             n_best_size=20, max_answer_length=30,
                             debug: bool = False):
     """
@@ -276,7 +277,7 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
         )
 
         if debug:
-            sample_preds = set(random.sample(list(predictions.keys()), 5))
+            sample_preds = set(random.sample(list(predictions.keys()), 5)) if len(sample_rows) == 0 else set(sample_rows)
 
         gold_texts_arr = examples[efeat]
 
@@ -345,7 +346,7 @@ def do_train_run(
         job_number: str,
         cfg: dict, db: dict,
         train_langs: List[str], eval_langs: List[str], model_type: str,
-        eval_samples: int,
+        eval_samples: int, eval_rows: List[int],
         cpus: int = os.cpu_count(), debug: bool = False,
         eval_only: Optional[pathlib.Path] = None,
 ) -> dict:
@@ -407,6 +408,7 @@ def do_train_run(
             model_type,
             train_eval_dataset,
             train_eval_dataset,
+            eval_rows,
             debug=debug,
         )
     else:
@@ -493,6 +495,7 @@ def do_train_run(
             cfg, db, eval_lang,
             model_type,
             eval_dataset, eval_dataset,
+            eval_rows,
             debug=debug,
         )
         if trainer is None:
@@ -532,9 +535,16 @@ if __name__ == "__main__":
     ap.add_argument('--training-eval-size', type=int, default=1000,
                     help='The number of records to sample from the eval dataset to use while training')
     ap.add_argument('--eval-only', type=pathlib.Path, default=None, help='If supplied, specifies a checkpoint to evaluate, training is skipped, assumes that it is a trainer checkpoint')
+    ap.add_argument('--sample-examples', type=int, nargs='*', default=[], help='The specific rows to sample examples from, defaults to random')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
     for mt in args.model_type:
-        do_train_run(args.job_number, cfg, db, args.train_langs, args.eval_langs, mt, args.training_eval_size, args.cpus, args.debug, args.eval_only)
+        do_train_run(
+            args.job_number, cfg, db,
+            args.train_langs, args.eval_langs, mt,
+            args.training_eval_size, args.sample_examples,
+            args.cpus,
+            args.debug, args.eval_only
+        )
 
