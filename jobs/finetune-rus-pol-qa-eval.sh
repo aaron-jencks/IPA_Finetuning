@@ -20,12 +20,10 @@ echo "Python: $(which python) ($(python --version))"
 
 model_type="normal"
 model_checkpoint=""
-sample_id=""
 for arg in "$@"; do
   case $arg in
     --model-type=*) model_type="${arg#*=}";;
     --model-checkpoint=*) model_checkpoint="${arg#*=}";;
-    --sample-id=*) sample_id="${arg#*=}";;
     *)
       echo "unknown argument: $arg"
       exit 1
@@ -51,18 +49,15 @@ cd "$repo_dir"
 echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
-if [ -z $sample_id ]; then
+#PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True" python finetuning-exp-qa.py \
+#  "$SLURM_JOB_ID" "config/finetune-rus-pol.json" "config/finetune-rus-pol-qa-${model_type}.json" \
+#  --train-langs "russian" "polish" --eval-langs "russian" "polish" --model-type $model_type \
+#  --eval-only "$model_checkpoint" \
+#  --cpus 16 --debug
 PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True" python finetuning-exp-qa.py \
   "$SLURM_JOB_ID" "config/finetune-rus-pol.json" "config/finetune-rus-pol-qa-${model_type}.json" \
   --train-langs "russian" "polish" --eval-langs "russian" "polish" --model-type $model_type \
-  --eval-only "$model_checkpoint" \
+  --eval-only "$model_checkpoint" --sample-examples 5552 21094 \
   --cpus 16 --debug
-else
-PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True" python finetuning-exp-qa.py \
-  "$SLURM_JOB_ID" "config/finetune-rus-pol.json" "config/finetune-rus-pol-qa-${model_type}.json" \
-  --train-langs "russian" "polish" --eval-langs "russian" "polish" --model-type $model_type \
-  --eval-only "$model_checkpoint" --sample-examples "$sample_id" \
-  --cpus 16 --debug
-fi
 
 echo "===== [$(date)] JOB COMPLETED ====="
