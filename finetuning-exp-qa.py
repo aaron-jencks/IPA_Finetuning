@@ -392,8 +392,9 @@ def do_train_run(
 
     # configure trainer
     run_name = f'{model_type}-{"-".join(train_langs)}'
-    temporary_output_dir = pathlib.Path(cfg["checkpoints"]["training"]) / f"{cfg['wandb']['project']}-{run_name}/"
+    temporary_output_dir = pathlib.Path(cfg["checkpoints"]["training"]) / f"{job_number}-{cfg['wandb']['project']}-{run_name}/"
     temporary_output_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f'saving checkpoints to "{temporary_output_dir}"')
     hyperparameters = cfg["hyperparameters"]
     training_args = TrainingArguments(
         eval_strategy="steps",
@@ -422,6 +423,7 @@ def do_train_run(
     logger.info('starting wandb')
 
     hyperparameters['job_number'] = job_number
+    hyperparameters['checkpoint_location'] = temporary_output_dir
 
     # run training
     wandb_settings = cfg["wandb"]
