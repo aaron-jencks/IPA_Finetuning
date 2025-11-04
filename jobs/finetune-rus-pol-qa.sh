@@ -50,7 +50,7 @@ echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 
 # Run the actual script
 PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True" python finetuning-exp-qa.py \
-  "$SLURM_JOB_ID" config/finetune-rus-pol.json config/finetune-rus-pol-qa.json \
+  "$SLURM_JOB_ID" "config/finetune-rus-pol.json" "config/finetune-rus-pol-qa-${model_type}.json" \
   --train-langs $train_lang --eval-langs $eval_lang --model-type $model_type \
   --training-eval-size $eval_samples \
   --cpus 16 --debug
