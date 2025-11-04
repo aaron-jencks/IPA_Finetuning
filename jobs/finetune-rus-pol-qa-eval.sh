@@ -1,0 +1,58 @@
+#!/bin/bash
+#SBATCH --job-name=gpt2_finetune_rus_pol_qa
+#SBATCH --account=PAS2836
+#SBATCH --output=/fs/ess/PAS2836/ipa_gpt/jobs/logs/%x-%j.out
+#SBATCH --error=/fs/ess/PAS2836/ipa_gpt/jobs/logs/errors/%x-%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=02:00:00
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --gpus-per-node=1
+
+echo "===== [$(date)] JOB STARTED ====="
+
+# Load required modules
+module load miniconda3/24.1.2-py310 cuda/12.4.1
+conda init bash
+conda activate nanogpt_cu124  # TODO change this to your personal environment
+
+echo "Python: $(which python) ($(python --version))"
+
+model_type="normal"
+model_checkpoint=""
+for arg in "$@"; do
+  case $arg in
+    --model-type=*) model_type="${arg#*=}";;
+    --model-checkpoint=*) model_checkpoint="${arg#*=}";;
+    *)
+      echo "unknown argument: $arg"
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z $model_checkpoint ]; then
+  echo "model checkpoint is required!"
+  exit 1
+fi
+
+# setup paths
+scratch_prefix="/fs/scratch/PAS2836/ipa_gpt"
+scratch_github_prefix="$scratch_prefix/github"
+scratch_hf_cache_prefix="$scratch_prefix/cache"
+mkdir -pv $scratch_github_prefix $scratch_hf_cache_prefix
+
+repo_name="IPA_Finetuning"
+repo_dir="$scratch_github_prefix/$repo_name"
+cd "$repo_dir"
+
+echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
+
+# Run the actual script
+PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True" python finetuning-exp-qa.py \
+  "$SLURM_JOB_ID" "config/finetune-rus-pol.json" "config/finetune-rus-pol-qa-${model_type}.json" \
+  --train-langs "russian" "polish" --eval-langs $eval_lang --model-type $model_type \
+  --eval-only "$model_checkpoint" \
+  --cpus 16 --debug
+
+echo "===== [$(date)] JOB COMPLETED ====="
