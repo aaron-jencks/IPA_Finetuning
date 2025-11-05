@@ -251,6 +251,13 @@ def truncate_list_output(l: list) -> list:
     return l[:current+1]
 
 
+def char_to_token_offset(c: int, mappings: List[Tuple[int, int]]) -> int:
+    for mi, (ms, me) in enumerate(mappings):
+        if me >= c >= ms:
+            return mi
+    return -1
+
+
 # 2) Factory that returns a compute_metrics compatible with Trainer
 def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
                             sample_rows: List[int],
@@ -265,7 +272,7 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
     dataset_settings = db[lang][cfg["task"]][cfg["datasets"][lang]]
     efeat = get_eval_fields(dataset_settings, model_type)
     metric = evaluate.load("squad")
-    id_to_row = {ex["id"]: ex for ex in examples}
+    id_to_row = {ex["id"]: (ex, feat) for ex, feat in zip(examples, features)}
 
     def compute_metrics(eval_pred):
         # eval_pred.predictions is (start_logits, end_logits)
@@ -299,8 +306,10 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
             gold_texts = answer["text"]
 
             if debug and eid in sample_preds:
-                ex_row = id_to_row[eid]
-                logger.info(f'{str(eid)} gold: {ex_row["formatted_strings"]}')
+                ex_row, ex_feat = id_to_row[eid]
+                ans_token_start = ex_feat['start_positions']
+                ans_token_end = ex_feat['end_positions']
+                logger.info(f'{str(eid)} gold tokens: ({ans_token_start}, {ans_token_end}), gold: {ex_row["formatted_strings"]}')
                 logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}" ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
                 # torch.set_printoptions(threshold=float('inf'))
                 logger.info(f'{str(eid)}: start logits: {truncate_list_output(pred_answer["logits"][0].tolist())}')
