@@ -225,6 +225,7 @@ def postprocess_qa_predictions(cfg, examples, features, raw_predictions):
                     'text': text,
                     'score': score,
                     'logits': (s_log, e_log),
+                    'logit_indices': (s, e)
                 }
                 if tried_answers[s] is None or score > tried_answers[s]['score']:
                     tried_answers[s] = answer_dict
@@ -309,8 +310,11 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
                 ex_row, ex_feat = id_to_row[eid]
                 ans_token_start = ex_feat['start_positions']
                 ans_token_end = ex_feat['end_positions']
+                predicted_positions = pred_answer['logit_indices']
                 logger.info(f'{str(eid)} gold tokens: ({ans_token_start}, {ans_token_end}), gold: {ex_row["formatted_strings"]}')
-                logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}" ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
+                logger.info(f'{str(eid)} predicted positions: {predicted_positions}')
+                logger.info(f'{str(eid)} character accuracy: ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
+                logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}"')
                 # torch.set_printoptions(threshold=float('inf'))
                 logger.info(f'{str(eid)}: start logits: {truncate_list_output(pred_answer["logits"][0].tolist())}')
                 logger.info(f'{str(eid)}: end logits: {truncate_list_output(pred_answer["logits"][1].tolist())}')
