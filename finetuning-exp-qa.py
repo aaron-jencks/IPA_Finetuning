@@ -311,7 +311,7 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
             ans_token_end = ex_feat['end_positions']
             pred_start, pred_end = pred_answer['logit_indices']
 
-            if (debug and eid in sample_preds) or (display_incorrect and (ans_token_start != pred_start or ans_token_end != pred_end)):
+            if (debug and eid in sample_preds) or (display_incorrect and (abs(ans_token_start - pred_start) > 2 or abs(ans_token_end - pred_end) > 2)):
                 logger.info(f'{str(eid)} gold tokens: ({ans_token_start}, {ans_token_end}), gold: {ex_row["formatted_strings"]}')
                 logger.info(f'{str(eid)} predicted positions: ({pred_start}, {pred_end})')
                 logger.info(f'{str(eid)} character accuracy: ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
