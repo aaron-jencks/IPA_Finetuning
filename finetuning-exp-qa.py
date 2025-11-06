@@ -306,17 +306,17 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
             answer = gold_texts_arr[i]
             gold_texts = answer["text"]
 
-            ex_row, ex_feat = id_to_row[eid]
-            ans_token_start = ex_feat['start_positions']
-            ans_token_end = ex_feat['end_positions']
-            pred_start, pred_end = pred_answer['logit_indices']
-
             if (debug and eid in sample_preds) or (display_incorrect and (abs(ans_token_start - pred_start) > 2 or abs(ans_token_end - pred_end) > 2)):
+                ex_row, ex_feat = id_to_row[eid]
+                ans_token_start = ex_feat['start_positions']
+                ans_token_end = ex_feat['end_positions']
+                pred_start, pred_end = pred_answer['logit_indices']
                 logger.info(f'{str(eid)} gold tokens: ({ans_token_start}, {ans_token_end}), gold: {ex_row["formatted_strings"]}')
                 logger.info(f'{str(eid)} predicted positions: ({pred_start}, {pred_end})')
                 logger.info(f'{str(eid)} character accuracy: ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
                 logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}"')
                 # torch.set_printoptions(threshold=float('inf'))
+                logger.info(f'{str(eid)}: Offsets: {ex_feat["offset_mapping"]}')
                 logger.info(f'{str(eid)}: start logits: {truncate_list_output(pred_answer["logits"][0].tolist())}')
                 logger.info(f'{str(eid)}: end logits: {truncate_list_output(pred_answer["logits"][1].tolist())}')
                 # torch.set_printoptions(profile="default")
