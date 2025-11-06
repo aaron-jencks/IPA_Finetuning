@@ -2,6 +2,7 @@
 cascade-config
 datasets
 evaluate
+ipympl
 matplotlib
 scikit-learn
 scipy
