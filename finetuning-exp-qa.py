@@ -261,7 +261,7 @@ def char_to_token_offset(c: int, mappings: List[Tuple[int, int]]) -> int:
 
 # 2) Factory that returns a compute_metrics compatible with Trainer
 def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
-                            sample_rows: List[int],
+                            sample_rows: List[int], display_incorrect: bool,
                             n_best_size=20, max_answer_length=30,
                             debug: bool = False):
     """
@@ -306,13 +306,14 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
             answer = gold_texts_arr[i]
             gold_texts = answer["text"]
 
-            if debug and eid in sample_preds:
-                ex_row, ex_feat = id_to_row[eid]
-                ans_token_start = ex_feat['start_positions']
-                ans_token_end = ex_feat['end_positions']
-                predicted_positions = pred_answer['logit_indices']
+            ex_row, ex_feat = id_to_row[eid]
+            ans_token_start = ex_feat['start_positions']
+            ans_token_end = ex_feat['end_positions']
+            pred_start, pred_end = pred_answer['logit_indices']
+
+            if (debug and eid in sample_preds) or (display_incorrect and (ans_token_start != pred_start or ans_token_end != pred_end)):
                 logger.info(f'{str(eid)} gold tokens: ({ans_token_start}, {ans_token_end}), gold: {ex_row["formatted_strings"]}')
-                logger.info(f'{str(eid)} predicted positions: {predicted_positions}')
+                logger.info(f'{str(eid)} predicted positions: ({pred_start}, {pred_end})')
                 logger.info(f'{str(eid)} character accuracy: ({pred_answer["start"]} vs {answer["answer_start"][0]}) score: {pred_answer["score"]}')
                 logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_texts[0]}"')
                 # torch.set_printoptions(threshold=float('inf'))
@@ -359,7 +360,7 @@ def do_train_run(
         job_number: str,
         cfg: dict, db: dict,
         train_langs: List[str], eval_langs: List[str], model_type: str,
-        eval_samples: int, eval_rows: List[int],
+        eval_samples: int, eval_rows: List[int], display_incorrect: bool,
         cpus: int = os.cpu_count(), debug: bool = False,
         eval_only: Optional[pathlib.Path] = None,
 ) -> dict:
@@ -421,7 +422,7 @@ def do_train_run(
             model_type,
             train_eval_dataset,
             train_eval_dataset,
-            eval_rows,
+            eval_rows, display_incorrect,
             debug=debug,
         )
     else:
@@ -508,7 +509,7 @@ def do_train_run(
             cfg, db, eval_lang,
             model_type,
             eval_dataset, eval_dataset,
-            eval_rows,
+            eval_rows, display_incorrect,
             debug=debug,
         )
         if trainer is None:
@@ -549,6 +550,7 @@ if __name__ == "__main__":
                     help='The number of records to sample from the eval dataset to use while training')
     ap.add_argument('--eval-only', type=pathlib.Path, default=None, help='If supplied, specifies a checkpoint to evaluate, training is skipped, assumes that it is a trainer checkpoint')
     ap.add_argument('--sample-examples', type=int, nargs='*', default=[], help='The specific rows to sample examples from, defaults to random')
+    ap.add_argument('--display-incorrect', action='store_true', help='Display incorrect predictions')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
@@ -556,7 +558,8 @@ if __name__ == "__main__":
         do_train_run(
             args.job_number, cfg, db,
             args.train_langs, args.eval_langs, mt,
-            args.training_eval_size, args.sample_examples,
+            args.training_eval_size,
+            args.sample_examples, args.display_incorrect,
             args.cpus,
             args.debug, args.eval_only
         )
