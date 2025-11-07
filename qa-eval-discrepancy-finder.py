@@ -477,7 +477,6 @@ if __name__ == "__main__":
     ap.add_argument('--ipa-model-path', type=pathlib.Path, required=True, help='path to the ipa model checkpoint')
     ap.add_argument('--output-file', type=pathlib.Path, required=True, help='path to output tsv file')
     ap.add_argument('--eval-langs', nargs='+', type=str, help='The languages to evaluate on')
-    ap.add_argument('--sample-examples', type=int, nargs='*', default=[], help='The specific rows to sample examples from, defaults to random')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
