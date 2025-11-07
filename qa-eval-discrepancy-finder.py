@@ -403,12 +403,10 @@ def do_eval_run(
             data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
             compute_metrics=metrics,
         )
-        metric_prefix = f'eval_{eval_lang}'
         lang_results = trainer.evaluate(
             eval_dataset=eval_dataset,
-            metric_key_prefix=metric_prefix,
         )
-        logger.info(f'found {len(lang_results["eval_mistakes"])} errors')
+        logger.info(f'found {len(lang_results[f"mistakes"])} errors')
         results[eval_lang] = lang_results
 
     return results
