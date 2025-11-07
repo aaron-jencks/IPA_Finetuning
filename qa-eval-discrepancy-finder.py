@@ -384,6 +384,7 @@ def do_eval_run(
         per_device_train_batch_size=hyperparameters["batch_size"],
         per_device_eval_batch_size=hyperparameters["batch_size"],
         no_cuda=cfg["cpu_only"],
+        report_to=None,  # disable wandb
     )
 
     # evaluate on each output language
