@@ -316,6 +316,7 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features):
                     'id': str(eid),
                     'row': ex_row,
                     'features': ex_feat,
+                    'answer': pred_answer,
                 })
 
         logger.info('computing metrics')
@@ -437,14 +438,59 @@ def evaluate_run_results(run_results: dict) -> dict:
             else:
                 current_errors[eval_lang] = current_errors[eval_lang] ^ id_set
     error_data = {}
-    for eval_lang in run_results['normal'].keys():
-        pass
+    for mt in run_results.keys():
+        for eval_lang in run_results[mt].keys():
+            if eval_lang not in error_data:
+                error_data[eval_lang] = {}
+            error_set = current_errors[eval_lang]
+            for row in run_results[mt][eval_lang]:
+                if row['id'] not in error_set:
+                    continue
+                if row['id'] not in error_data[eval_lang]:
+                    error_data[eval_lang][row['id']] = {}
+                error_data[eval_lang][row['id']][mt] = row
+    return error_data
+
+
+def generate_csv_rows(found_errors: dict) -> list:
+    output_rows = [
+        [
+            'eval_lang', 'model_type', 'rowid',
+            'gold_indices', 'gold_input_string', 'gold_answer_text', 'gold_answer_character_start',
+            'character_index_mapping',
+            'answer_indices', 'answer_character_start', 'answer_confidence_score', 'answer_text',
+            'answer_start_logits', 'answer_end_logits',
+        ]
+    ]
+    for eval_lang in found_errors.keys():
+        for rowid in found_errors[eval_lang].keys():
+            for model_type in found_errors[eval_lang][rowid].keys():
+                row = found_errors[eval_lang][rowid][model_type]
+                row_feat = row['features']
+                row_values = row['row']
+                answer = row['answer']
+                output_rows.append([
+                    eval_lang, model_type, rowid,
+                    (row_feat['start_positions'], row_feat['end_positions']),               # logit indices
+                    row_values['formatted_strings'].replace('\t', '<tab_place_holder>'),
+                    row_values['answers']['text'][0].replace('\t', '<tab_place_holder>'),
+                    row_values['answers']['answer_start'][0],                               # character position
+                    row_feat['offset_mapping'],                                             # character to index mapping
+                    answer['logit_indices'],
+                    answer['start'],                                                        # character position
+                    answer['score'],
+                    answer['text'].replace('\t', '<tab_place_holder>'),
+                    truncate_list_output(answer["logits"][0].tolist()),                     # start logits
+                    truncate_list_output(answer["logits"][0].tolist())                      # end logits
+                ])
+    return output_rows
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap = utils.setup_default_args(ap)
     ap.add_argument('--model-path', type=pathlib.Path, required=True, help='path to model checkpoint')
+    ap.add_argument('--output-file', type=pathlib.Path, required=True, help='path to output tsv file')
     ap.add_argument('--eval-langs', nargs='+', type=str, help='The languages to evaluate on')
     ap.add_argument('--model-type', type=str, nargs='+', default=['normal', 'ipa'], help='The model type')
     ap.add_argument('--sample-examples', type=int, nargs='*', default=[], help='The specific rows to sample examples from, defaults to random')
@@ -461,3 +507,13 @@ if __name__ == "__main__":
         )
         results[mt] = run_results
 
+    found_errors = evaluate_run_results(results)
+    tsv_rows = generate_csv_rows(found_errors)
+
+    logger.info(f'found {len(tsv_rows) >> 1} errors')
+
+    with open(args.output_file, 'w+') as fp:
+        for row in tqdm(tsv_rows, desc='writing tsv rows to file'):
+            s_arr = list(map(str, row))
+            line = '\t'.join(s_arr) + '\n'
+            fp.write(line)
