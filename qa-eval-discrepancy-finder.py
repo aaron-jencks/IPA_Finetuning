@@ -436,6 +436,10 @@ def evaluate_run_results(run_results: dict) -> dict:
     return error_data
 
 
+def prepare_tsv_string(s: str) -> str:
+    return s.replace('\t', '<tab_place_holder>').replace('\n', '<newline_place_holder>')
+
+
 def generate_csv_rows(found_errors: dict) -> list:
     output_rows = [
         [
@@ -456,14 +460,14 @@ def generate_csv_rows(found_errors: dict) -> list:
                 output_rows.append([
                     eval_lang, model_type, rowid,
                     (row_feat['start_positions'], row_feat['end_positions']),               # logit indices
-                    row_values['formatted_strings'].replace('\t', '<tab_place_holder>'),
-                    row_values['answers']['text'][0].replace('\t', '<tab_place_holder>'),
+                    prepare_tsv_string(row_values['formatted_strings']),
+                    prepare_tsv_string(row_values['answers']['text'][0]),
                     row_values['answers']['answer_start'][0],                               # character position
                     row_feat['offset_mapping'],                                             # character to index mapping
                     answer['logit_indices'],
                     answer['start'],                                                        # character position
                     answer['score'],
-                    answer['text'].replace('\t', '<tab_place_holder>'),
+                    prepare_tsv_string(answer['text']),
                     truncate_list_output(answer["logits"][0].tolist()),                     # start logits
                     truncate_list_output(answer["logits"][0].tolist())                      # end logits
                 ])
