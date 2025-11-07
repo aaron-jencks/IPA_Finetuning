@@ -2,8 +2,7 @@ import argparse
 import logging
 import os
 import pathlib
-import random
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 
 from datasets import load_dataset, concatenate_datasets, Dataset, Value
 import evaluate
@@ -11,13 +10,12 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from transformers import Trainer, TrainingArguments, DataCollatorWithPadding
-import wandb
 
 import config
 from hf_wrapper import GPTForQuestionAnswering
 from tokenizer import load_tokenizer
 import utils
-from utils import load_pretrained_model, create_downsampled_dataset
+from utils import load_pretrained_model
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
