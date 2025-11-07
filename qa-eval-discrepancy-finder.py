@@ -408,6 +408,7 @@ def do_eval_run(
             eval_dataset=eval_dataset,
             metric_key_prefix=metric_prefix,
         )
+        logger.info(f'found {len(lang_results["eval_mistakes"])} errors')
         results[eval_lang] = lang_results
 
     return results
