@@ -322,7 +322,7 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features):
 
         return {
             **built_in_metrics,
-            'eval_mistakes': mistakes,
+            'mistakes': mistakes,
         }
 
     return compute_metrics
