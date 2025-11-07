@@ -416,7 +416,7 @@ def evaluate_run_results(run_results: dict) -> dict:
     current_errors = {}
     for mt in run_results.keys():
         for eval_lang in run_results[mt].keys():
-            id_set = set([d['id'] for d in current_errors[mt][eval_lang]])
+            id_set = set([d['id'] for d in run_results[mt][eval_lang]])
             if eval_lang not in current_errors:
                 current_errors[eval_lang] = id_set
             else:
