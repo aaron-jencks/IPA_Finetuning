@@ -379,6 +379,7 @@ def do_eval_run(
     # configure trainer
     hyperparameters = cfg["hyperparameters"]
     training_args = TrainingArguments(
+        output_dir='why-is-this-required?',
         save_strategy='no',
         per_device_train_batch_size=hyperparameters["batch_size"],
         per_device_eval_batch_size=hyperparameters["batch_size"],
