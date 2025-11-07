@@ -407,7 +407,7 @@ def do_eval_run(
             eval_dataset=eval_dataset,
         )
         logger.info(f'found {len(lang_results[f"mistakes"])} errors')
-        results[eval_lang] = lang_results
+        results[eval_lang] = lang_results['mistakes']
 
     return results
 
