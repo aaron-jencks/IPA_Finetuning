@@ -406,8 +406,8 @@ def do_eval_run(
         lang_results = trainer.evaluate(
             eval_dataset=eval_dataset,
         )
-        logger.info(f'found {len(lang_results[f"mistakes"])} errors')
-        results[eval_lang] = lang_results['mistakes']
+        logger.info(f'found {len(lang_results["eval_mistakes"])} errors')
+        results[eval_lang] = lang_results['eval_mistakes']
 
     return results
 
