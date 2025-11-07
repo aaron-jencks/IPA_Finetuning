@@ -473,19 +473,24 @@ def generate_csv_rows(found_errors: dict) -> list:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap = utils.setup_default_args(ap)
-    ap.add_argument('--model-path', type=pathlib.Path, required=True, help='path to model checkpoint')
+    ap.add_argument('--normal-model-path', type=pathlib.Path, required=True, help='path to the normal model checkpoint')
+    ap.add_argument('--ipa-model-path', type=pathlib.Path, required=True, help='path to the ipa model checkpoint')
     ap.add_argument('--output-file', type=pathlib.Path, required=True, help='path to output tsv file')
     ap.add_argument('--eval-langs', nargs='+', type=str, help='The languages to evaluate on')
-    ap.add_argument('--model-type', type=str, nargs='+', default=['normal', 'ipa'], help='The model type')
     ap.add_argument('--sample-examples', type=int, nargs='*', default=[], help='The specific rows to sample examples from, defaults to random')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
+    model_dict = {
+        'normal': args.normal_model_path,
+        'ipa': args.ipa_model_path,
+    }
+
     results = {}
-    for mt in args.model_type:
+    for mt in ['normal', 'ipa']:
         run_results = do_eval_run(
             cfg, db,
-            args.model_path,
+            model_dict[mt],
             args.eval_langs, mt,
             args.cpus,
         )
