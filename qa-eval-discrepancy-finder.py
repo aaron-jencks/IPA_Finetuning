@@ -412,22 +412,6 @@ def do_eval_run(
     return results
 
 
-def display_example_data(eid: int, pred_answer: dict, gold_answer: dict, id_to_row: dict):
-    # id_to_row = {ex["id"]: (ex, feat) for ex, feat in zip(examples, features)}
-    pred_text = pred_answer['text']
-    ex_row, ex_feat = id_to_row[eid]
-    ans_token_start = ex_feat['start_positions']
-    ans_token_end = ex_feat['end_positions']
-    pred_start, pred_end = pred_answer['logit_indices']
-    logger.info(f'{str(eid)} gold tokens: ({ans_token_start}, {ans_token_end}), gold: {ex_row["formatted_strings"]}')
-    logger.info(f'{str(eid)} predicted positions: ({pred_start}, {pred_end})')
-    logger.info(f'{str(eid)} character accuracy: ({pred_answer["start"]} vs {gold_answer["answer_start"][0]}) score: {pred_answer["score"]}')
-    logger.info(f'{str(eid)}: "{pred_text}" vs "{gold_answer['text'][0]}"')
-    logger.info(f'{str(eid)}: Offsets: {ex_feat["offset_mapping"]}')
-    logger.info(f'{str(eid)}: start logits: {truncate_list_output(pred_answer["logits"][0].tolist())}')
-    logger.info(f'{str(eid)}: end logits: {truncate_list_output(pred_answer["logits"][1].tolist())}')
-
-
 def evaluate_run_results(run_results: dict) -> dict:
     current_errors = {}
     for mt in run_results.keys():
