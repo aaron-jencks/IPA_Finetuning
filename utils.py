@@ -32,6 +32,7 @@ def create_downsampled_dataset(ds: Dataset, samples: int) -> Dataset:
 
 def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool = True) -> nn.Module:
     if nano:
+        logger.info('loading nanogpt model')
         checkpoint = torch.load(path, map_location=device)
         gptconf = nanogpt.GPTConfig(**checkpoint['model_args'])
         model = nanogpt.GPT(gptconf)
@@ -44,6 +45,7 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
                     if k in model.state_dict() and v.shape == model.state_dict()[k].shape}
         model.load_state_dict({**model.state_dict(), **filtered})
     else:
+        logger.info('loading modded nanogpt model')
         checkpoint = torch.load(path, map_location=device, weights_only=False)
         base_model = modded_nanogpt_flex.GPT(50_048, 12, 6, 768, 1024)
         for m in base_model.modules():
