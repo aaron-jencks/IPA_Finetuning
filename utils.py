@@ -51,9 +51,9 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
 
         state_dict = checkpoint['model']
         unwanted_prefix = '_orig_mod.'
-        for k in list(state_dict.keys()):
+        for k, v in list(state_dict.items()):
             if k.startswith(unwanted_prefix):
-                state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
+                k = k[len(unwanted_prefix):]
 
             # rename projection parameters to match GPTBatchedSmall
             if ".attn.c_proj.weight" in k:
@@ -66,6 +66,8 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
             # we don't want the classification head / lm_head in the backbone
             if k.startswith("lm_head."):
                 continue
+
+            state_dict[k] = v
 
         model.load_state_dict(state_dict)
     return model.to(device)
