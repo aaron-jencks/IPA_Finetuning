@@ -12,6 +12,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 
 import model as nanogpt
 import model_modded as modded_nanogpt
+import model_flex as modded_nanogpt_flex
 from tokenizer import eod_token
 
 
@@ -44,47 +45,13 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
         model.load_state_dict({**model.state_dict(), **filtered})
     else:
         checkpoint = torch.load(path, map_location=device, weights_only=False)
-        model = modded_nanogpt.GPTBatchedSmall()
-        for m in model.modules():
+        base_model = modded_nanogpt_flex.GPT(50_048, 12, 6, 768, 1024)
+        for m in base_model.modules():
             if isinstance(m, nn.Embedding):
                 m.bfloat16()
+        base_model.load_state_dict(checkpoint['model'])
+        model = modded_nanogpt.GPTBatchedSmall.from_pretrained(base_model)
 
-        state_dict = checkpoint['model']
-        unwanted_prefix = '_orig_mod.'
-        for k, v in list(state_dict.items()):
-            if k.startswith(unwanted_prefix):
-                state_dict.pop(k)
-                k = k[len(unwanted_prefix):]
-
-            if k == "scalars":
-                # keep the meaningful part, drop or pad the rest
-                target_len = model.state_dict()[k].shape[0]
-                src_len = v.shape[0]
-
-                if src_len >= target_len:
-                    # your exact case: 64 -> 60
-                    v = v[:target_len]
-                else:
-                    # if checkpoint is smaller, pad with initial values
-                    padded = model.state_dict()[k].clone()
-                    padded[:src_len] = v
-                    v = padded
-
-            # rename projection parameters to match GPTBatchedSmall
-            if ".attn.c_proj.weight" in k:
-                k = k.replace(".attn.c_proj.weight", ".attn.c_proj_weight")
-            if ".mlp.c_fc.weight" in k:
-                k = k.replace(".mlp.c_fc.weight", ".mlp.c_fc_weight")
-            if ".mlp.c_proj.weight" in k:
-                k = k.replace(".mlp.c_proj.weight", ".mlp.c_proj_weight")
-
-            # we don't want the classification head / lm_head in the backbone
-            if k.startswith("lm_head."):
-                continue
-
-            state_dict[k] = v
-
-        model.load_state_dict(state_dict)
     return model.to(device)
 
 
