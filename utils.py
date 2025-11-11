@@ -71,17 +71,17 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
                     padded[:src_len] = v
                     v = padded
 
-            # rename projection parameters to match GPTBatchedSmall
-            if ".attn.c_proj.weight" in k:
-                k = k.replace(".attn.c_proj.weight", ".attn.c_proj_weight")
-            if ".mlp.c_fc.weight" in k:
-                k = k.replace(".mlp.c_fc.weight", ".mlp.c_fc_weight")
-            if ".mlp.c_proj.weight" in k:
-                k = k.replace(".mlp.c_proj.weight", ".mlp.c_proj_weight")
+            # # rename projection parameters to match GPTBatchedSmall
+            # if ".attn.c_proj.weight" in k:
+            #     k = k.replace(".attn.c_proj.weight", ".attn.c_proj_weight")
+            # if ".mlp.c_fc.weight" in k:
+            #     k = k.replace(".mlp.c_fc.weight", ".mlp.c_fc_weight")
+            # if ".mlp.c_proj.weight" in k:
+            #     k = k.replace(".mlp.c_proj.weight", ".mlp.c_proj_weight")
 
-            # we don't want the classification head / lm_head in the backbone
-            if k.startswith("lm_head."):
-                continue
+            # # we don't want the classification head / lm_head in the backbone
+            # if k.startswith("lm_head."):
+            #     continue
 
             state_dict[k] = v
 
