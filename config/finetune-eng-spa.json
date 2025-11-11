@@ -5,8 +5,8 @@
     "normal": "english_spanish_normal_11_08_2025"
   },
   "tokenizers": {
-    "ipa_prefix": "bpe-rus-pol-ipa-number-preservation-08-20-2025",
-    "normal_prefix": "bpe-rus-pol-normal-number-preservation-08-20-2025"
+    "ipa_prefix": "bpe-eng-spa-ipa-number-preservation-09-29-2025",
+    "normal_prefix": "bpe-eng-spa-normal-number-preservation-09-29-2025"
   },
   "nanogpt": false
 }
