@@ -1,5 +1,6 @@
 {
   "checkpoints": {
+    "prefix": "/fs/ess/PAS2836/ipa_gpt/checkpoints",
     "ipa": "english_spanish_ipa_11_08_2025",
     "normal": "english_spanish_normal_11_08_2025"
   },
