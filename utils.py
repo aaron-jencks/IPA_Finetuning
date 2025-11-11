@@ -30,8 +30,8 @@ def create_downsampled_dataset(ds: Dataset, samples: int) -> Dataset:
 
 
 def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool = True) -> nn.Module:
-    checkpoint = torch.load(path, map_location=device)
     if nano:
+        checkpoint = torch.load(path, map_location=device)
         gptconf = nanogpt.GPTConfig(**checkpoint['model_args'])
         model = nanogpt.GPT(gptconf)
         state_dict = checkpoint['model']
@@ -43,11 +43,14 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
                     if k in model.state_dict() and v.shape == model.state_dict()[k].shape}
         model.load_state_dict({**model.state_dict(), **filtered})
     else:
+        checkpoint = torch.load(path, map_location=device, weights_only=False)
         model = modded_nanogpt.GPTBatchedSmall()
-        for m in model.modules():
-            if isinstance(m, nn.Embedding):
-                m.bfloat16()
-        model.load_state_dict(checkpoint['model'])
+        state_dict = checkpoint['model']
+        unwanted_prefix = '_orig_mod.'
+        for k in list(state_dict.keys()):
+            if k.startswith(unwanted_prefix):
+                state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
+        model.load_state_dict(state_dict)
     return model.to(device)
 
 
