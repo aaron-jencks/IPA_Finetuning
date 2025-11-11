@@ -53,6 +53,7 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
         unwanted_prefix = '_orig_mod.'
         for k, v in list(state_dict.items()):
             if k.startswith(unwanted_prefix):
+                state_dict.pop(k)
                 k = k[len(unwanted_prefix):]
 
             # rename projection parameters to match GPTBatchedSmall
