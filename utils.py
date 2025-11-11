@@ -44,6 +44,9 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
         model.load_state_dict({**model.state_dict(), **filtered})
     else:
         model = modded_nanogpt.GPTBatchedSmall()
+        for m in model.modules():
+            if isinstance(m, nn.Embedding):
+                m.bfloat16()
         model.load_state_dict(checkpoint['model'])
     return model.to(device)
 
