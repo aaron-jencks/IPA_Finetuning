@@ -255,7 +255,7 @@ class GPTBatchedSmall(nn.Module):
 
         return batched_model
 
-    def forward_features(self, input_seq: Tensor):
+    def forward(self, input_seq: Tensor):
         """Extract features from the model
 
         Args:
