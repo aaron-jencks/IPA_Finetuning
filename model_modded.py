@@ -166,7 +166,7 @@ class GPTBatchedSmall(nn.Module):
     It uses U-net style skip connections in the second half of the network.
     """
 
-    def __init__(self, vocab_size: int = 50_001, num_layers: int = 12, num_heads: int = 6, model_dim: int = 768, max_seq_len: int = 1024):
+    def __init__(self, vocab_size: int = 50_048, num_layers: int = 12, num_heads: int = 6, model_dim: int = 768, max_seq_len: int = 1024):
         super().__init__()
         assert num_layers == 12, f"Small model expects 12 layers, got {num_layers}"
         assert num_heads == 6, f"Small model expects 6 heads, got {num_heads}"
