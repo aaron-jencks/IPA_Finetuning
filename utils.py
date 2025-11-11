@@ -87,7 +87,7 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
 
         base_model.load_state_dict(state_dict)
 
-        model = modded_nanogpt.GPTBatchedSmall.from_pretrained(base_model)
+        model = modded_nanogpt.GPTBatchedSmall.from_pretrained_gpt(base_model)
     return model.to(device)
 
 
