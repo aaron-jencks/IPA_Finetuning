@@ -45,11 +45,28 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
     else:
         checkpoint = torch.load(path, map_location=device, weights_only=False)
         model = modded_nanogpt.GPTBatchedSmall()
+        for m in model.modules():
+            if isinstance(m, nn.Embedding):
+                m.bfloat16()
+
         state_dict = checkpoint['model']
         unwanted_prefix = '_orig_mod.'
         for k in list(state_dict.keys()):
             if k.startswith(unwanted_prefix):
                 state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
+
+            # rename projection parameters to match GPTBatchedSmall
+            if ".attn.c_proj.weight" in k:
+                k = k.replace(".attn.c_proj.weight", ".attn.c_proj_weight")
+            if ".mlp.c_fc.weight" in k:
+                k = k.replace(".mlp.c_fc.weight", ".mlp.c_fc_weight")
+            if ".mlp.c_proj.weight" in k:
+                k = k.replace(".mlp.c_proj.weight", ".mlp.c_proj_weight")
+
+            # we don't want the classification head / lm_head in the backbone
+            if k.startswith("lm_head."):
+                continue
+
         model.load_state_dict(state_dict)
     return model.to(device)
 
