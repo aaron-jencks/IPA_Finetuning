@@ -56,6 +56,20 @@ def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool =
                 state_dict.pop(k)
                 k = k[len(unwanted_prefix):]
 
+            if k == "scalars":
+                # keep the meaningful part, drop or pad the rest
+                target_len = model.state_dict()[k].shape[0]
+                src_len = v.shape[0]
+
+                if src_len >= target_len:
+                    # your exact case: 64 -> 60
+                    state_dict[k] = v[:target_len]
+                else:
+                    # if checkpoint is smaller, pad with initial values
+                    padded = model.state_dict()[k].clone()
+                    padded[:src_len] = v
+                    state_dict[k] = padded
+
             # rename projection parameters to match GPTBatchedSmall
             if ".attn.c_proj.weight" in k:
                 k = k.replace(".attn.c_proj.weight", ".attn.c_proj_weight")
