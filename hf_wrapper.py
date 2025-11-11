@@ -40,12 +40,12 @@ from transformers.modeling_outputs import SequenceClassifierOutput, QuestionAnsw
 
 
 class GPTForSequenceClassification(nn.Module):
-    def __init__(self, pretrained_model, num_classes=2):
+    def __init__(self, pretrained_model: nn.Module, pad_token_id: int, num_classes=2):
         super().__init__()
         self.pretrained_model = pretrained_model
         self.num_classes = num_classes
-        self.hidden_size = pretrained_model.config.n_embd
-        self.pad_token_id = pretrained_model.config.pad_token_id
+        self.hidden_size = 768
+        self.pad_token_id = pad_token_id
 
         self.classifier = nn.Linear(self.hidden_size, num_classes, bias=False)
         self.classifier.weight.data.normal_(mean=0.0, std=0.02)
@@ -77,11 +77,11 @@ class GPTForSequenceClassification(nn.Module):
 
 
 class GPTForQuestionAnswering(nn.Module):
-    def __init__(self, pretrained_model):
+    def __init__(self, pretrained_model: nn.Module, pad_token_id: int):
         super().__init__()
         self.pretrained_model = pretrained_model
-        self.hidden_size = pretrained_model.config.n_embd
-        self.pad_token_id = pretrained_model.config.pad_token_id
+        self.hidden_size = 768
+        self.pad_token_id = pad_token_id
         self.qa_outputs = nn.Linear(self.hidden_size, 2)  # -> (B, L, 2)
         nn.init.normal_(self.qa_outputs.weight, mean=0.0, std=0.02)
         if self.qa_outputs.bias is not None:

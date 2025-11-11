@@ -6,10 +6,12 @@ from typing import List
 import logging
 
 import torch
+import torch.nn as nn
 from datasets import Dataset
 from sklearn.metrics import precision_score, recall_score, f1_score
 
-from model import GPT, GPTConfig
+import model as nanogpt
+import model_modded as modded_nanogpt
 from tokenizer import eod_token
 
 
@@ -27,25 +29,29 @@ def create_downsampled_dataset(ds: Dataset, samples: int) -> Dataset:
     return downsample
 
 
-def load_pretrained_model(path: pathlib.Path, device: str = 'cuda') -> GPT:
+def load_pretrained_model(path: pathlib.Path, device: str = 'cuda', nano: bool = True) -> nn.Module:
     checkpoint = torch.load(path, map_location=device)
-    gptconf = GPTConfig(**checkpoint['model_args'])
-    model = GPT(gptconf)
-    state_dict = checkpoint['model']
-    unwanted_prefix = '_orig_mod.'
-    for k in list(state_dict.keys()):
-        if k.startswith(unwanted_prefix):
-            state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
-    filtered = {k: v for k, v in state_dict.items()
-                if k in model.state_dict() and v.shape == model.state_dict()[k].shape}
-    model.load_state_dict({**model.state_dict(), **filtered})
+    if nano:
+        gptconf = nanogpt.GPTConfig(**checkpoint['model_args'])
+        model = nanogpt.GPT(gptconf)
+        state_dict = checkpoint['model']
+        unwanted_prefix = '_orig_mod.'
+        for k in list(state_dict.keys()):
+            if k.startswith(unwanted_prefix):
+                state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
+        filtered = {k: v for k, v in state_dict.items()
+                    if k in model.state_dict() and v.shape == model.state_dict()[k].shape}
+        model.load_state_dict({**model.state_dict(), **filtered})
+    else:
+        model = modded_nanogpt.GPTBatchedSmall()
+        model.load_state_dict(checkpoint['model'])
     return model.to(device)
 
 
-def load_random_from_pretrained_model(path: pathlib.Path, device: str = 'cuda') -> GPT:
+def load_random_from_pretrained_model(path: pathlib.Path, device: str = 'cuda') -> nn.Module:
     checkpoint = torch.load(path, map_location=device)
-    gptconf = GPTConfig(**checkpoint['model_args'])
-    model = GPT(gptconf)
+    gptconf = nanogpt.GPTConfig(**checkpoint['model_args'])
+    model = nanogpt.GPT(gptconf)
     return model.to(device)
 
 

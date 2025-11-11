@@ -89,9 +89,7 @@ def do_train_run(
     # load the model
     vocab_path, merges_path = get_tokenizer_paths(cfg, model_type)
     tokenizer = load_tokenizer(vocab_path, merges_path)
-    base_model = load_pretrained_model(get_checkpoint_path(cfg, model_type), device)
-    base_model.config.pad_token_id = tokenizer.pad_token_id
-    base_model.config.padding_side = tokenizer.padding_side
+    base_model = load_pretrained_model(get_checkpoint_path(cfg, model_type), device, nano=cfg["nanogpt"])
 
     # load the datasets
     # merge train datasets
@@ -132,7 +130,7 @@ def do_train_run(
     # Configure model now that we know class count
     if class_count <= 0:
         raise ValueError('dataset has no output classes')
-    model = GPTForSequenceClassification(base_model, num_classes=class_count).to(device)
+    model = GPTForSequenceClassification(base_model, tokenizer.pad_token_id, num_classes=class_count).to(device)
 
     # configure trainer
     run_name = f'{model_type}-{"-".join(train_langs)}'

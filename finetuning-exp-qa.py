@@ -375,9 +375,7 @@ def do_train_run(
     vocab_path, merges_path = get_tokenizer_paths(cfg, model_type)
     tokenizer = load_tokenizer(vocab_path, merges_path)
     checkpoint_path = get_checkpoint_path(cfg, model_type)
-    base_model = load_pretrained_model(checkpoint_path, device)
-    base_model.config.pad_token_id = tokenizer.pad_token_id
-    base_model.config.padding_side = tokenizer.padding_side
+    base_model = load_pretrained_model(checkpoint_path, device, nano=cfg['nanogpt'])
 
     # load the datasets
     # merge train datasets
@@ -431,7 +429,7 @@ def do_train_run(
 
     logger.info('setting up model wrapper')
 
-    model = GPTForQuestionAnswering(base_model).to(device)
+    model = GPTForQuestionAnswering(base_model, tokenizer.pad_token_id).to(device)
     if eval_only is not None:
         model = load_pretrained_trainer_model(eval_only, model, device)
 

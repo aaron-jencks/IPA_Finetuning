@@ -10,6 +10,7 @@
   "hf_cache": "/fs/scratch/PAS2836/ipa_gpt/cache",
   "random_seed": 42,
   "cpu_only": false,
+  "nanogpt": true,
   "hyperparameters": {
     "weight_decay": 0.01,
     "gradient_clipping": 1.0,
