@@ -206,8 +206,8 @@ def do_train_run(
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap = utils.setup_default_args(ap)
-    ap.add_argument('--train-langs', nargs='+', type=str, help='The languages to train on')
-    ap.add_argument('--eval-langs', nargs='+', type=str, help='The languages to evaluate on')
+    ap.add_argument('--train-langs', nargs='+', type=str, required=True, help='The languages to train on')
+    ap.add_argument('--eval-langs', nargs='+', type=str, required=True, help='The languages to evaluate on')
     ap.add_argument('--model-type', type=str, nargs='+', default=['normal', 'ipa'], help='The model type')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
