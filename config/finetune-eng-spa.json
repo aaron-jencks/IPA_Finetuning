@@ -1,12 +1,10 @@
 {
   "checkpoints": {
-    "prefix": "/fs/ess/PAS2836/ipa_gpt/checkpoints",
-    "ipa": "english_spanish_ipa_11_08_2025",
-    "normal": "english_spanish_normal_11_08_2025"
+    "ipa": "english_spanish_ipa_11_12_2025",
+    "normal": "english_spanish_normal_11_12_2025"
   },
   "tokenizers": {
     "ipa_prefix": "bpe-eng-spa-ipa-number-preservation-09-29-2025",
     "normal_prefix": "bpe-eng-spa-normal-number-preservation-09-29-2025"
   },
-  "nanogpt": false
 }
