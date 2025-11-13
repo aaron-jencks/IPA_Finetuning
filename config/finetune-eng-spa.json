@@ -6,5 +6,5 @@
   "tokenizers": {
     "ipa_prefix": "bpe-eng-spa-ipa-number-preservation-09-29-2025",
     "normal_prefix": "bpe-eng-spa-normal-number-preservation-09-29-2025"
-  },
+  }
 }
