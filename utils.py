@@ -1,13 +1,15 @@
 import os
 import pathlib
 import random
+import time
 from argparse import ArgumentParser
 from typing import List
 import logging
 
 import torch
 import torch.nn as nn
-from datasets import Dataset
+from datasets import Dataset, load_dataset
+from huggingface_hub.errors import HfHubHTTPError
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 import model as nanogpt
@@ -17,6 +19,18 @@ from tokenizer import eod_token
 
 
 logger = logging.getLogger(__name__)
+
+
+def load_hf_dataset(*args, **kwargs) -> Dataset:
+    while True:
+        try:
+            return load_dataset(*args, **kwargs)
+        except HfHubHTTPError as e:
+            if e.response.status_code == 429:
+                logger.warning("huggingface has rate limited us, waiting 5 minutes")
+                time.sleep(300)
+            else:
+                raise e
 
 
 def create_downsampled_dataset(ds: Dataset, samples: int) -> Dataset:

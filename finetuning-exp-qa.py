@@ -73,7 +73,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type,
     logger.info(f'Loading dataset "{dataset_name}"')
     logger.info(f'Label feature: {dataset_settings["eval_feature"]}')
 
-    ds = load_dataset(dataset_name, split=split, cache_dir=cfg["hf_cache"])
+    ds = utils.load_hf_dataset(dataset_name, split=split, cache_dir=cfg["hf_cache"])
     fields = get_fields(dataset_settings, model_type)
     q_feat = fields[0]
     c_feat = fields[1]
