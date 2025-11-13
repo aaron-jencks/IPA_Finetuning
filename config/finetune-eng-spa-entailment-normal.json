@@ -5,12 +5,12 @@
     "spanish": "xnli"
   },
   "hyperparameters": {
-    "epochs": 2,
+    "epochs": 5,
     "learning_rate": 1e-5,
-    "warmup_ratio": 0.225,
-    "batch_size": 32
+    "warmup_ratio": 0.2,
+    "batch_size": 64
   },
   "wandb": {
-    "project": "eng-spa-finetuning-entailment-gridsearch"
+    "project": "eng-spa-finetuning-entailment"
   }
 }
