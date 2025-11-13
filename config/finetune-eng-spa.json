@@ -1,7 +1,7 @@
 {
   "checkpoints": {
-    "ipa": "english_spanish_ipa_11_12_2025",
-    "normal": "english_spanish_normal_11_12_2025"
+    "ipa": "english_spanish_ipa_12_5_50k_11_12_2025",
+    "normal": "english_spanish_normal_12_5_50k_11_12_2025"
   },
   "tokenizers": {
     "ipa_prefix": "bpe-eng-spa-ipa-number-preservation-09-29-2025",
