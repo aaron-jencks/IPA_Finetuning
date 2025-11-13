@@ -1,0 +1,12 @@
+{
+  "parameters" : {
+    "learning_rate": [5e-4, 1e-5, 5e-5],
+    "batch_size": 64,
+    "warmup_ratio": [0.2, 0.3],
+    "epochs": [4, 5]
+  },
+  "languages": {
+    "train": "all",
+    "eval": "all"
+  }
+}
