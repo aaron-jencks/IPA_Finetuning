@@ -11,6 +11,6 @@
     "batch_size": 64
   },
   "wandb": {
-    "project": "eng-spa-finetuning-entailment-gridsearch"
+    "project": "eng-spa-finetuning-sentiment-gridsearch"
   }
 }
