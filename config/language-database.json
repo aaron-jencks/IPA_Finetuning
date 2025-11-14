@@ -16,6 +16,22 @@
         "classes": 3,
         "filter_length": false
       }
+    },
+    "sentiment": {
+      "tweet-multilingual": {
+        "dataset": "iggy12345/tweet-sentiment-multilingual-en-ipa",
+        "train_features": [
+          "text"
+        ],
+        "eval_feature": "label",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "classification",
+        "classes": 3,
+        "filter_length": false
+      }
     }
   },
   "spanish": {
@@ -25,6 +41,22 @@
         "train_features": [
           "premise",
           "hypothesis"
+        ],
+        "eval_feature": "label",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "classification",
+        "classes": 3,
+        "filter_length": false
+      }
+    },
+    "sentiment": {
+      "tweet-multilingual": {
+        "dataset": "iggy12345/tweet-sentiment-multilingual-es-ipa",
+        "train_features": [
+          "text"
         ],
         "eval_feature": "label",
         "splits": [
