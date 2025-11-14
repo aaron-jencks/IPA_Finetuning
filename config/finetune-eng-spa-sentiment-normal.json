@@ -5,9 +5,9 @@
     "spanish": "tweet-multilingual"
   },
   "hyperparameters": {
-    "epochs": 4,
+    "epochs": 2,
     "learning_rate": 5e-5,
-    "warmup_ratio": 0.3,
+    "warmup_ratio": 0.15,
     "batch_size": 64
   },
   "wandb": {
