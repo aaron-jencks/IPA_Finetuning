@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=gpt2_finetune_rus_pol_entail
+#SBATCH --job-name=gpt2_finetune_eng_spa_sentiment
 #SBATCH --account=PAS2836
 #SBATCH --output=/fs/ess/PAS2836/ipa_gpt/jobs/logs/%x-%j.out
 #SBATCH --error=/fs/ess/PAS2836/ipa_gpt/jobs/logs/errors/%x-%j.err
