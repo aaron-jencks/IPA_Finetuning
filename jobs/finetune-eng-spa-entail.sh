@@ -34,8 +34,8 @@ done
 if [[ "$train_lang" == "both" ]]; then train_lang="english spanish"; fi
 eval_lang="english spanish"
 
-config_file="config/finetune-eng-spa-entailment.json"
-#if [[ "$model_type" == "ipa" ]]; then config_file="config/finetune-rus-pol-entailment-ipa.json"; fi
+config_file="config/finetune-eng-spa-entailment-normal.json"
+if [[ "$model_type" == "ipa" ]]; then config_file="config/finetune-eng-spa-entailment-ipa.json"; fi
 
 # setup paths
 scratch_prefix="/fs/scratch/PAS2836/ipa_gpt"
