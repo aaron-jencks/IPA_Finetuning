@@ -8,7 +8,9 @@
     "epochs": 4,
     "learning_rate": 5e-5,
     "warmup_ratio": 0.3,
-    "batch_size": 64
+    "batch_size": 64,
+    "max_answer_length": 275,
+    "top_k": 20
   },
   "wandb": {
     "project": "eng-spa-finetuning-qa-gridsearch"
