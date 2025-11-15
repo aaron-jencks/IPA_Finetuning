@@ -32,6 +32,22 @@
         "classes": 3,
         "filter_length": false
       }
+    },
+    "qa": {
+      "squad": {
+        "dataset": "iggy12345/squad-ipa",
+        "train_features": [
+          "context",
+          "question"
+        ],
+        "eval_feature": "answers",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "question-answering",
+        "filter_length": true
+      }
     }
   },
   "spanish": {
@@ -66,6 +82,22 @@
         "task_type": "classification",
         "classes": 3,
         "filter_length": false
+      }
+    },
+    "qa": {
+      "squad": {
+        "dataset": "iggy12345/squad-es-ipa",
+        "train_features": [
+          "context",
+          "question"
+        ],
+        "eval_feature": "answers",
+        "splits": [
+          "train",
+          "validation"
+        ],
+        "task_type": "question-answering",
+        "filter_length": true
       }
     }
   },
