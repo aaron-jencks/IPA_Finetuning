@@ -88,8 +88,8 @@
       "squad": {
         "dataset": "iggy12345/squad-es-ipa",
         "train_features": [
-          "context",
-          "question"
+          "question",
+          "context"
         ],
         "eval_feature": "answers",
         "splits": [
