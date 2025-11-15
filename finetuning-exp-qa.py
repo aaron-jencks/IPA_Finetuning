@@ -302,11 +302,23 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
             pred_answers = predictions.get(
                 eid, None
             )
-            pred_answer = pred_answers['answers'][pred_answers['best_idx']]
-            pred_text = pred_answer['text']
 
             answer = gold_texts_arr[i]
             gold_texts = answer["text"]
+
+            if pred_answers is None or pred_answers['best_idx'] == -1:
+                logger.warning("no answer found for eid {}".format(eid))
+                preds.append({"id": str(eid), "prediction_text": ''})
+                refs.append({"id": str(eid), "answers": {
+                    "text": gold_texts,
+                    "answer_start": answer["answer_start"],
+                }})
+                if pbar is not None:
+                    pbar.update(1)
+                continue
+
+            pred_answer = pred_answers['answers'][pred_answers['best_idx']]
+            pred_text = pred_answer['text']
 
             if (debug and eid in sample_preds) or (display_incorrect and (abs(ans_token_start - pred_start) > 2 or abs(ans_token_end - pred_end) > 2)):
                 ex_row, ex_feat = id_to_row[eid]
