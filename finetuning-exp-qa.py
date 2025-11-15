@@ -85,7 +85,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type,
         for q, c, a in zip(examples[q_feat], examples[c_feat], examples[eval_feat]):
             s, off = format_qa_string(q, c, tokenizer.eos_token)
             strings.append(s)
-            a['answer_start'][0] += off
+            a['answer_start'] = [st + off for st in a['answer_start']]
             answers.append(a)
         return {
             'formatted_strings': strings,
@@ -119,25 +119,27 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type,
         start_positions = []
         end_positions = []
 
+        # Find the start and end of the context
+        pad_token_count = 0
+        context_start = -1
+        context_end = -1
+        for ti, token in enumerate(inputs['input_ids'][i]):
+            if token == tokenizer.eos_token_id:
+                pad_token_count += 1
+                if pad_token_count == 2:
+                    context_start = ti + 1
+                elif pad_token_count == 3:
+                    context_end = ti - 1
+                    break
+        if context_start < 0 or context_end < 0:
+            raise ValueError("context not found")
+
+        # For training only use the first answer,
+        # see the dataset only contain one answer for the train split
         for i, offset in enumerate(offset_mapping):
             answer = answers[i]
             start_char = answer['answer_start'][0]
             end_char = answer['answer_start'][0] + len(answer['text'][0])
-
-            # Find the start and end of the context
-            pad_token_count = 0
-            context_start = -1
-            context_end = -1
-            for ti, token in enumerate(inputs['input_ids'][i]):
-                if token == tokenizer.eos_token_id:
-                    pad_token_count += 1
-                    if pad_token_count == 2:
-                        context_start = ti + 1
-                    elif pad_token_count == 3:
-                        context_end = ti - 1
-                        break
-            if context_start < 0 or context_end < 0:
-                raise ValueError("context not found")
 
             # If the answer is not fully inside the context, label it (0, 0)
             if offset[context_start][0] > end_char or offset[context_end][1] < start_char:
