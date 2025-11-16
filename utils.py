@@ -109,12 +109,12 @@ def flatten_multi_features(examples, features: List[str], sequence_token: str = 
     return [sep.join([x or '' for x in items]) for items in zip(*[examples[f] for f in features])]
 
 
-def make_logit_dumping_compute_metrics(output_dir: pathlib.Path, task: str, train_langs: List[str], lang: str) -> Callable:
+def make_logit_dumping_compute_metrics(output_dir: pathlib.Path, task: str, train_langs: List[str], lang: str, model_type: str) -> Callable:
     os.makedirs(output_dir, exist_ok=True)
 
     # make file name
     date_str = datetime.now().strftime('%m-%d-%Y')
-    fname = f'{task}-{"-".join(train_langs)}-{lang}-{date_str}.npz'
+    fname = f'{task}-{"-".join(train_langs)}-{lang}-{model_type}-{date_str}.npz'
 
     def compute_metrics(eval_pred):
         logits, labels = eval_pred

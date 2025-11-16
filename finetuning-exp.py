@@ -190,7 +190,7 @@ def do_train_run(
     for eval_lang, eval_dataset in eval_datasets.items():
         metric_prefix = f'eval_{eval_lang}'
         if dump_logits:
-            trainer.compute_metrics = make_logit_dumping_compute_metrics(logit_dir, cfg['task'], train_langs, eval_lang)
+            trainer.compute_metrics = make_logit_dumping_compute_metrics(logit_dir, cfg['task'], train_langs, eval_lang, model_type)
         lang_results = trainer.evaluate(
             eval_dataset=eval_dataset,
             metric_key_prefix=metric_prefix,

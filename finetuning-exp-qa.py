@@ -283,7 +283,7 @@ def make_qa_compute_metrics(cfg, db, train_langs, lang, model_type: str, example
     # make file name
     os.makedirs(logit_dir, exist_ok=True)
     date_str = datetime.now().strftime('%m-%d-%Y')
-    fname = f'{cfg["task"]}-{"-".join(train_langs)}-{lang}-{date_str}.json'
+    fname = f'{cfg["task"]}-{"-".join(train_langs)}-{lang}-{model_type}-{date_str}.json'
     output_fname_path = str(logit_dir / fname)
 
     def compute_metrics(eval_pred):
