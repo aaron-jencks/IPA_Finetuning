@@ -22,10 +22,10 @@ sbatch ./finetune-eng-spa-qa.sh --train-lang="spanish" --model-type="ipa"
 sbatch ./finetune-eng-spa-qa.sh --train-lang="both" --model-type="ipa"
 
 sbatch ./finetune-rus-pol-senti.sh --train-lang="russian" --model-type="normal"
-sbatch ./finetune-rus-pol-senti.sh --train-lang="spanish" --model-type="normal"
+sbatch ./finetune-rus-pol-senti.sh --train-lang="polish" --model-type="normal"
 sbatch ./finetune-rus-pol-senti.sh --train-lang="both" --model-type="normal"
 sbatch ./finetune-rus-pol-senti.sh --train-lang="russian" --model-type="ipa"
-sbatch ./finetune-rus-pol-senti.sh --train-lang="spanish" --model-type="ipa"
+sbatch ./finetune-rus-pol-senti.sh --train-lang="polish" --model-type="ipa"
 sbatch ./finetune-rus-pol-senti.sh --train-lang="both" --model-type="ipa"
 
 sbatch ./finetune-rus-pol-entail.sh --train-lang="russian" --model-type="normal"
