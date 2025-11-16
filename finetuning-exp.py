@@ -217,5 +217,5 @@ if __name__ == "__main__":
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
     for mt in args.model_type:
-        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt, args.cpus)
+        do_train_run(cfg, db, args.train_langs, args.eval_langs, mt, args.logit_directory, args.dump_logits, args.cpus)
 
