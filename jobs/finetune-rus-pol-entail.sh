@@ -53,6 +53,6 @@ echo "===== [$(date)] RUNNING PYTHON SCRIPT ====="
 TQDM_DISABLE=1 python finetuning-exp.py \
   "$SLURM_JOB_ID" config/finetune-rus-pol.json "$config_file" \
   --train-langs $train_lang --eval-langs $eval_lang --model-type $model_type \
-  --cpus 16
+  --cpus 16 --dump-logits
 
 echo "===== [$(date)] JOB COMPLETED ====="
