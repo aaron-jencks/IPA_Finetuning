@@ -3,9 +3,11 @@ import pathlib
 import random
 import time
 from argparse import ArgumentParser
-from typing import List
+from datetime import datetime
+from typing import List, Callable
 import logging
 
+import numpy as np
 import torch
 import torch.nn as nn
 from datasets import Dataset, load_dataset
@@ -105,6 +107,42 @@ def load_random_from_pretrained_model(path: pathlib.Path, device: str = 'cuda') 
 def flatten_multi_features(examples, features: List[str], sequence_token: str = eod_token) -> List[str]:
     sep = f'\n\n{sequence_token}\n\n'
     return [sep.join([x or '' for x in items]) for items in zip(*[examples[f] for f in features])]
+
+
+def make_logit_dumping_compute_metrics(output_dir: pathlib.Path, task: str, train_langs: List[str], lang: str) -> Callable:
+    os.makedirs(output_dir, exist_ok=True)
+
+    # make file name
+    date_str = datetime.now().strftime('%m-%d-%Y')
+    fname = f'{task}-{"-".join(train_langs)}-{lang}-{date_str}.npz'
+
+    def compute_metrics(eval_pred):
+        logits, labels = eval_pred
+        preds = logits.argmax(axis=-1)
+
+        output_fname_path = str(output_dir / fname)
+
+        np.savez(
+            output_fname_path,
+            preds=preds,
+            labels=labels,
+            logits=logits,
+        )
+
+        correct = (preds == labels).sum().item()
+        total = len(labels)
+        accuracy = correct / total
+
+        return {
+            "accuracy": accuracy,
+            "precision": precision_score(labels, preds, average="macro", zero_division=0),
+            "recall": recall_score(labels, preds, average="macro", zero_division=0),
+            "f1": f1_score(labels, preds, average="macro", zero_division=0),
+            "dump_file": output_fname_path,
+        }
+
+    return compute_metrics
+
 
 
 def compute_metrics(eval_pred):

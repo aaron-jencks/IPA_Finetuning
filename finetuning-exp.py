@@ -13,8 +13,7 @@ import config
 from hf_wrapper import GPTForSequenceClassification
 from tokenizer import load_tokenizer
 import utils
-from utils import flatten_multi_features, load_pretrained_model, compute_metrics
-
+from utils import flatten_multi_features, load_pretrained_model, compute_metrics, make_logit_dumping_compute_metrics
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -77,6 +76,7 @@ def load_and_preprocess(cfg: dict, db: dict, lang, split, tokenizer, model_type,
 def do_train_run(
         cfg: dict, db: dict,
         train_langs: List[str], eval_langs: List[str], model_type: str,
+        logit_dir: pathlib.Path, dump_logits: bool,
         cpus: int = os.cpu_count()
 ) -> dict:
     device = 'cpu' if not torch.cuda.is_available() or cfg['cpu_only'] else 'cuda'
@@ -189,6 +189,8 @@ def do_train_run(
     f1_results = {}
     for eval_lang, eval_dataset in eval_datasets.items():
         metric_prefix = f'eval_{eval_lang}'
+        if dump_logits:
+            trainer.compute_metrics = make_logit_dumping_compute_metrics(logit_dir, cfg['task'], train_langs, eval_lang)
         lang_results = trainer.evaluate(
             eval_dataset=eval_dataset,
             metric_key_prefix=metric_prefix,
@@ -209,6 +211,8 @@ if __name__ == "__main__":
     ap.add_argument('--train-langs', nargs='+', type=str, required=True, help='The languages to train on')
     ap.add_argument('--eval-langs', nargs='+', type=str, required=True, help='The languages to evaluate on')
     ap.add_argument('--model-type', type=str, nargs='+', default=['normal', 'ipa'], help='The model type')
+    ap.add_argument('--logit-directory', type=pathlib.Path, default=pathlib.Path('./results'), help='The directory to store logits')
+    ap.add_argument('--dump-logits', action='store_true', help='Whether to dump logits')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 

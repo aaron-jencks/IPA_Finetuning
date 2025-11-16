@@ -2,8 +2,10 @@
 cascade-config
 datasets
 evaluate
+huggingface_hub
 ipympl
 matplotlib
+numpy
 scikit-learn
 scipy
 torch
