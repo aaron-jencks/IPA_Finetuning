@@ -449,11 +449,12 @@ def do_train_run(
         logger.info('creating metrics function')
 
         metrics = make_qa_compute_metrics(
-            cfg, db, train_eval_dataset_name,
+            cfg, db, train_langs, train_eval_dataset_name,
             model_type,
             train_eval_dataset,
             train_eval_dataset,
             eval_rows, display_incorrect,
+            logit_dir, dump_logits,
             debug=debug,
         )
     else:
