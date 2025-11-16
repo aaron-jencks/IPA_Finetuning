@@ -5,9 +5,9 @@
     "spanish": "squad"
   },
   "hyperparameters": {
-    "epochs": 4,
-    "learning_rate": 5e-5,
-    "warmup_ratio": 0.3,
+    "epochs": 3,
+    "learning_rate": 1e-4,
+    "warmup_ratio": 0.1,
     "batch_size": 64,
     "max_answer_length": 275,
     "top_k": 20
