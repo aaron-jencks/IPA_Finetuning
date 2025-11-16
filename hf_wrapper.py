@@ -125,6 +125,6 @@ class GPTForQuestionAnswering(nn.Module):
             loss=loss,
             start_logits=start_logits,
             end_logits=end_logits,
-            hidden_states=hidden_states,
+            # hidden_states=hidden_states,
             attentions=None,
         )
