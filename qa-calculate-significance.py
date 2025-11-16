@@ -100,18 +100,15 @@ def load_qa_json(path: str):
 
 
 def align_ids(preds_a, golds_a, preds_b, golds_b):
-    """
-    Ensure we have identical sets of example IDs.
-    """
     ids_a = set(preds_a.keys()) & set(golds_a.keys())
     ids_b = set(preds_b.keys()) & set(golds_b.keys())
-    common = ids_a & ids_b
 
+    common = ids_a & ids_b
     if not common:
-        raise ValueError("No common example IDs found between A and B.")
+        raise ValueError("No common example IDs between A and B.")
 
     if ids_a != ids_b:
-        raise ValueError("Mismatch in example IDs between predictions A and B.")
+        print(f"[warning] A-only: {len(ids_a - ids_b)}  B-only: {len(ids_b - ids_a)}")
 
     return sorted(common)
 
@@ -164,13 +161,15 @@ def do_significance_run(path_normal, path_ipa, iterations):
 
     ids = align_ids(preds_a, golds_a, preds_b, golds_b)
 
-    # Compute per-example SQuAD F1
+    # Compute per-example SQuAD F1 for each model against *its own* golds
     scores_a = []
     scores_b = []
     for eid in ids:
-        gold = golds_a[eid]  # same as golds_b[eid]
-        scores_a.append(best_over_ground_truths(preds_a[eid], gold))
-        scores_b.append(best_over_ground_truths(preds_b[eid], gold))
+        gold_a = golds_a[eid]
+        gold_b = golds_b[eid]
+
+        scores_a.append(best_over_ground_truths(preds_a[eid], gold_a))
+        scores_b.append(best_over_ground_truths(preds_b[eid], gold_b))
 
     mean_a = np.mean(scores_a)
     mean_b = np.mean(scores_b)
@@ -187,6 +186,7 @@ def do_significance_run(path_normal, path_ipa, iterations):
     print(f"p-value: {p_value:.6g}")
 
     return mean_a, mean_b, obs_diff, p_value
+
 
 
 # -------------------------------
