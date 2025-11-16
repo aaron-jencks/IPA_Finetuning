@@ -13,6 +13,6 @@
     "top_k": 20
   },
   "wandb": {
-    "project": "eng-spa-finetuning-qa-gridsearch"
+    "project": "eng-spa-finetuning-qa"
   }
 }
