@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 import argparse
+import os
+import pathlib
 import json
-import string
-from typing import Dict, List, Tuple
-
+from multiprocessing import Pool
+from tqdm import tqdm
 import numpy as np
-
+import string
 
 # -------------------------------
-#  SQuAD-style normalization & F1
+# Normalization + SQuAD-style F1
 # -------------------------------
 
 def normalize_answer(s: str) -> str:
-    """Lowercase, remove punctuation, articles, and extra whitespace."""
+    """Lowercase, remove punctuation, articles, and whitespace."""
     def remove_articles(text):
-        # for English Q/A; adjust if needed
-        return " ".join([w for w in text.split() if w.lower() not in ("a", "an", "the")])
+        return " ".join(w for w in text.split() if w not in ("a", "an", "the"))
 
     def white_space_fix(text):
         return " ".join(text.split())
@@ -31,7 +31,9 @@ def normalize_answer(s: str) -> str:
 
 
 def f1_score_squad(prediction: str, ground_truth: str) -> float:
-    """SQuAD token-overlap F1 between a single prediction and a single gold answer."""
+    """
+    Standard SQuAD token-overlap F1.
+    """
     pred_tokens = normalize_answer(prediction).split()
     gold_tokens = normalize_answer(ground_truth).split()
 
@@ -41,13 +43,14 @@ def f1_score_squad(prediction: str, ground_truth: str) -> float:
         return 0.0
 
     common = {}
-    for token in gold_tokens:
-        common[token] = common.get(token, 0) + 1
+    for t in gold_tokens:
+        common[t] = common.get(t, 0) + 1
+
     num_same = 0
-    for token in pred_tokens:
-        if common.get(token, 0) > 0:
+    for t in pred_tokens:
+        if common.get(t, 0) > 0:
             num_same += 1
-            common[token] -= 1
+            common[t] -= 1
 
     if num_same == 0:
         return 0.0
@@ -57,212 +60,183 @@ def f1_score_squad(prediction: str, ground_truth: str) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
-def em_score_squad(prediction: str, ground_truth: str) -> float:
-    """Exact match: 1.0 if normalized strings are identical, else 0.0."""
-    return float(normalize_answer(prediction) == normalize_answer(ground_truth))
-
-
-def best_over_ground_truths(prediction: str, ground_truths: List[str], metric="f1") -> float:
-    """Take max F1 (or EM) over multiple gold answers."""
-    if metric == "f1":
-        scores = [f1_score_squad(prediction, gt) for gt in ground_truths]
-    elif metric == "em":
-        scores = [em_score_squad(prediction, gt) for gt in ground_truths]
-    else:
-        raise ValueError(f"Unknown metric: {metric}")
-    return max(scores) if scores else 0.0
-
-
-# -------------------------------
-#  Loading preds/refs JSON
-# -------------------------------
-
-def load_qa_file(path: str) -> Tuple[Dict[str, str], Dict[str, List[str]]]:
+def best_over_ground_truths(prediction, gold_list):
     """
-    Load a QA preds/refs JSON dumped by make_qa_compute_metrics.
+    Handle multiple human answers. Return max F1.
+    """
+    if not gold_list:
+        return 0.0
+    return max(f1_score_squad(prediction, gt) for gt in gold_list)
 
-    Expected structure:
-      {
-        "preds": [{"id": "...", "prediction_text": "..."}],
-        "refs":  [{"id": "...", "answers": {"text": [...], "answer_start": [...]}}],
-      }
 
+# -------------------------------
+# Loading QA JSON (your format)
+# -------------------------------
+
+def load_qa_json(path: str):
+    """
+    Load {"preds": [...], "refs": [...]} file saved during Trainer eval.
     Returns:
-      pred_texts: dict[id -> prediction_text]
-      gold_texts: dict[id -> list of gold answers (strings)]
+      pred_dict: {id -> prediction_text}
+      gold_dict: {id -> [gold_answers]}
     """
     with open(path, "r", encoding="utf-8") as f:
         obj = json.load(f)
 
-    preds_list = obj["preds"]
-    refs_list = obj["refs"]
+    preds = obj["preds"]
+    refs = obj["refs"]
 
-    pred_texts = {}
-    for p in preds_list:
-        pred_texts[str(p["id"])] = p.get("prediction_text", "")
+    pred_dict = {str(p["id"]): p.get("prediction_text", "") for p in preds}
 
-    gold_texts = {}
-    for r in refs_list:
-        ans = r["answers"]
-        texts = ans["text"]
-        # ensure list
-        if isinstance(texts, str):
-            texts = [texts]
-        gold_texts[str(r["id"])] = texts
+    gold_dict = {}
+    for r in refs:
+        ans = r["answers"]["text"]
+        # always ensure list
+        if isinstance(ans, str):
+            ans = [ans]
+        gold_dict[str(r["id"])] = ans
 
-    return pred_texts, gold_texts
+    return pred_dict, gold_dict
 
 
-def align_ids(
-    preds_a: Dict[str, str],
-    golds_a: Dict[str, List[str]],
-    preds_b: Dict[str, str],
-    golds_b: Dict[str, List[str]],
-):
+def align_ids(preds_a, golds_a, preds_b, golds_b):
     """
-    Ensure both models were evaluated on the same example IDs.
-    Returns a sorted list of IDs.
+    Ensure we have identical sets of example IDs.
     """
     ids_a = set(preds_a.keys()) & set(golds_a.keys())
     ids_b = set(preds_b.keys()) & set(golds_b.keys())
     common = ids_a & ids_b
-    if not common:
-        raise ValueError("No common IDs found between the two QA outputs.")
 
-    if ids_a != ids_b or ids_a != common:
-        # this is stricter than necessary but safer; you can relax if needed
-        raise ValueError(
-            "Mismatch between example IDs across files. "
-            "Make sure you used the same eval set and JSON dumping code."
-        )
+    if not common:
+        raise ValueError("No common example IDs found between A and B.")
+
+    if ids_a != ids_b:
+        raise ValueError("Mismatch in example IDs between predictions A and B.")
 
     return sorted(common)
 
 
 # -------------------------------
-#  Approximate Randomization Test
+# Approximate randomization
 # -------------------------------
 
-def approximate_randomization_on_scores(
-    scores_a: np.ndarray,
-    scores_b: np.ndarray,
-    iterations: int = 10000,
-    seed: int | None = None,
-) -> Tuple[float, float]:
+def _one_iteration(scores_a, scores_b, observed):
     """
-    Approximate randomization test on per-example scores (F1 or EM).
+    Perform one AR iteration: randomly swap scores, return 1 if |diff| >= |observed|.
+    """
+    rng = np.random.default_rng()
+    n = len(scores_a)
+    swap = rng.random(n) < 0.5
 
-    scores_a, scores_b: arrays of shape (N,)
-    Returns:
-      observed_diff (mean(A) - mean(B)), p_value
-    """
-    rng = np.random.default_rng(seed)
+    a_new = np.where(swap, scores_b, scores_a)
+    b_new = np.where(swap, scores_a, scores_b)
+
+    diff = a_new.mean() - b_new.mean()
+    return int(abs(diff) >= abs(observed))
+
+
+def approximate_randomization_test(scores_a, scores_b, iterations):
     scores_a = np.asarray(scores_a, dtype=float)
     scores_b = np.asarray(scores_b, dtype=float)
 
     observed = scores_a.mean() - scores_b.mean()
-    n = len(scores_a)
-    count = 0
 
-    for _ in range(iterations):
-        swap = rng.random(n) < 0.5
-        a_new = np.where(swap, scores_b, scores_a)
-        b_new = np.where(swap, scores_a, scores_b)
-        diff = a_new.mean() - b_new.mean()
-        if abs(diff) >= abs(observed):
-            count += 1
+    args = [(scores_a, scores_b, observed) for _ in range(iterations)]
+
+    count = 0
+    with Pool(processes=os.cpu_count()) as pool:
+        for r in tqdm(pool.starmap(_one_iteration, args),
+                      total=iterations,
+                      desc="sampling"):
+            count += r
 
     p_value = (count + 1) / (iterations + 1)
     return observed, p_value
 
 
 # -------------------------------
-#  Main script
+# QA significance run (like do_significance_run)
+# -------------------------------
+
+def do_significance_run(path_normal, path_ipa, iterations):
+    preds_a, golds_a = load_qa_json(path_normal)
+    preds_b, golds_b = load_qa_json(path_ipa)
+
+    ids = align_ids(preds_a, golds_a, preds_b, golds_b)
+
+    # Compute per-example SQuAD F1
+    scores_a = []
+    scores_b = []
+    for eid in ids:
+        gold = golds_a[eid]  # same as golds_b[eid]
+        scores_a.append(best_over_ground_truths(preds_a[eid], gold))
+        scores_b.append(best_over_ground_truths(preds_b[eid], gold))
+
+    mean_a = np.mean(scores_a)
+    mean_b = np.mean(scores_b)
+
+    print(f"Model A (normal) avg F1: {mean_a:.6f}")
+    print(f"Model B (ipa)    avg F1: {mean_b:.6f}")
+    print(f"Observed difference (A - B): {mean_a - mean_b:.6f}")
+
+    obs_diff, p_value = approximate_randomization_test(scores_a, scores_b, iterations)
+
+    print("\nApproximate randomization test")
+    print(f"Iterations: {iterations}")
+    print(f"Observed diff recomputed: {obs_diff:.6f}")
+    print(f"p-value: {p_value:.6g}")
+
+    return mean_a, mean_b, obs_diff, p_value
+
+
+# -------------------------------
+# Main (mirrors your multiclass)
 # -------------------------------
 
 def main():
     parser = argparse.ArgumentParser(
-        description=(
-            "Approximate randomization test for QA (SQuAD-style) using "
-            "per-example predictions dumped from HuggingFace Trainer."
-        )
+        description="Approximate randomization significance test for QA (SQuAD-style)"
     )
-    parser.add_argument(
-        "qa_a",
-        type=str,
-        help="Path to JSON file for model A (must contain 'preds' and 'refs').",
-    )
-    parser.add_argument(
-        "qa_b",
-        type=str,
-        help="Path to JSON file for model B (must contain 'preds' and 'refs').",
-    )
-    parser.add_argument(
-        "--metric",
-        type=str,
-        default="f1",
-        choices=["f1", "em"],
-        help="Metric to test significance on (default: f1).",
-    )
-    parser.add_argument(
-        "--iterations",
-        type=int,
-        default=10000,
-        help="Number of randomization iterations (default: 10000).",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=None,
-        help="Random seed for reproducibility (default: None).",
-    )
+    parser.add_argument('logit_path', type=pathlib.Path)
+    parser.add_argument('task', type=str)
+    parser.add_argument('languages', type=str, nargs=2)
+    parser.add_argument('date_string', type=str)
+    parser.add_argument('--iterations', type=int, default=10000)
 
     args = parser.parse_args()
 
-    # Load both models' outputs
-    preds_a, golds_a = load_qa_file(args.qa_a)
-    preds_b, golds_b = load_qa_file(args.qa_b)
+    permutations = [
+        ([args.languages[0]], args.languages[0]),
+        ([args.languages[0]], args.languages[1]),
+        ([args.languages[1]], args.languages[0]),
+        ([args.languages[1]], args.languages[1]),
+        (args.languages, args.languages[0]),
+        (args.languages, args.languages[1]),
+    ]
 
-    # Align IDs
-    ids = align_ids(preds_a, golds_a, preds_b, golds_b)
+    results = []
 
-    # Compute per-example scores
-    scores_a = []
-    scores_b = []
+    for train_langs, eval_lang in permutations:
+        print(f"\nTesting {train_langs} -> {eval_lang}")
 
-    for eid in ids:
-        pred_a = preds_a[eid]
-        pred_b = preds_b[eid]
-        golds = golds_a[eid]  # same as golds_b[eid] by alignment
+        fname_normal = (
+            args.logit_path /
+            f"{args.task}-{'-'.join(train_langs)}-{eval_lang}-normal-{args.date_string}.json"
+        )
+        fname_ipa = (
+            args.logit_path /
+            f"{args.task}-{'-'.join(train_langs)}-{eval_lang}-ipa-{args.date_string}.json"
+        )
 
-        score_a = best_over_ground_truths(pred_a, golds, metric=args.metric)
-        score_b = best_over_ground_truths(pred_b, golds, metric=args.metric)
+        f1_norm, f1_ipa, _, p_val = do_significance_run(
+            fname_normal, fname_ipa, args.iterations
+        )
 
-        scores_a.append(score_a)
-        scores_b.append(score_b)
+        results.append((train_langs, eval_lang, f1_norm, f1_ipa, p_val))
 
-    scores_a = np.array(scores_a, dtype=float)
-    scores_b = np.array(scores_b, dtype=float)
-
-    mean_a = scores_a.mean()
-    mean_b = scores_b.mean()
-
-    print(f"Metric: {args.metric.upper()}")
-    print(f"Model A ({args.qa_a}): {mean_a:.6f}")
-    print(f"Model B ({args.qa_b}): {mean_b:.6f}")
-    print(f"Observed difference (A - B): {mean_a - mean_b:.6f}")
-
-    observed_diff, p_value = approximate_randomization_on_scores(
-        scores_a,
-        scores_b,
-        iterations=args.iterations,
-        seed=args.seed,
-    )
-
-    print("\nApproximate randomization test")
-    print(f"Iterations: {args.iterations}")
-    print(f"Observed diff recomputed: {observed_diff:.6f}")
-    print(f"p-value: {p_value:.6g}")
+    print("\nFinal Results:")
+    for row in results:
+        print(row)
 
 
 if __name__ == "__main__":
