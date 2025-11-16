@@ -1,8 +1,10 @@
 import argparse
+import json
 import logging
 import os
 import pathlib
 import random
+from datetime import datetime
 from typing import Tuple, List, Optional
 
 from datasets import load_dataset, concatenate_datasets, Dataset, Value
@@ -262,8 +264,9 @@ def char_to_token_offset(c: int, mappings: List[Tuple[int, int]]) -> int:
 
 
 # 2) Factory that returns a compute_metrics compatible with Trainer
-def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
+def make_qa_compute_metrics(cfg, db, train_langs, lang, model_type: str, examples, features,
                             sample_rows: List[int], display_incorrect: bool,
+                            logit_dir: pathlib.Path, dump_logits: bool,
                             n_best_size=20, max_answer_length=30,
                             debug: bool = False):
     """
@@ -276,6 +279,12 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
     efeat = get_eval_fields(dataset_settings, model_type)
     metric = evaluate.load("squad")
     id_to_row = {ex["id"]: (ex, feat) for ex, feat in zip(examples, features)}
+
+    # make file name
+    os.makedirs(logit_dir, exist_ok=True)
+    date_str = datetime.now().strftime('%m-%d-%Y')
+    fname = f'{cfg["task"]}-{"-".join(train_langs)}-{lang}-{date_str}.json'
+    output_fname_path = str(logit_dir / fname)
 
     def compute_metrics(eval_pred):
         # eval_pred.predictions is (start_logits, end_logits)
@@ -353,8 +362,17 @@ def make_qa_compute_metrics(cfg, db, lang, model_type: str, examples, features,
         if pbar is not None:
             pbar.close()
 
+        if dump_logits:
+            with open(output_fname_path, 'w+') as f:
+                json.dump({
+                    'preds': preds,
+                    'refs': refs,
+                }, f, ensure_ascii=False, indent=2)
+
         logger.info('computing metrics')
-        return metric.compute(predictions=preds, references=refs)
+        metrics = metric.compute(predictions=preds, references=refs)
+        metrics['qa_preds_file'] = output_fname_path
+        return metrics
 
     return compute_metrics
 
@@ -375,6 +393,7 @@ def do_train_run(
         cfg: dict, db: dict,
         train_langs: List[str], eval_langs: List[str], model_type: str,
         eval_samples: int, eval_rows: List[int], display_incorrect: bool,
+        logit_dir: pathlib.Path, dump_logits: bool,
         cpus: int = os.cpu_count(), debug: bool = False,
         eval_only: Optional[pathlib.Path] = None,
 ) -> dict:
@@ -518,10 +537,11 @@ def do_train_run(
     f1_results = {}
     for eval_lang, eval_dataset in eval_datasets.items():
         metrics = make_qa_compute_metrics(
-            cfg, db, eval_lang,
+            cfg, db, train_langs, eval_lang,
             model_type,
             eval_dataset, eval_dataset,
             eval_rows, display_incorrect,
+            logit_dir, dump_logits,
             debug=debug,
         )
         if trainer is None:
@@ -563,6 +583,8 @@ if __name__ == "__main__":
     ap.add_argument('--eval-only', type=pathlib.Path, default=None, help='If supplied, specifies a checkpoint to evaluate, training is skipped, assumes that it is a trainer checkpoint')
     ap.add_argument('--sample-examples', type=int, nargs='*', default=[], help='The specific rows to sample examples from, defaults to random')
     ap.add_argument('--display-incorrect', action='store_true', help='Display incorrect predictions')
+    ap.add_argument('--logit-directory', type=pathlib.Path, default=pathlib.Path('./results'), help='The directory to store logits')
+    ap.add_argument('--dump-logits', action='store_true', help='Whether to dump logits')
     args = ap.parse_args()
     cfg, db = config.load_config(args.config, args.default_config, args.language_database)
 
@@ -572,6 +594,7 @@ if __name__ == "__main__":
             args.train_langs, args.eval_langs, mt,
             args.training_eval_size,
             args.sample_examples, args.display_incorrect,
+            args.logit_directory, args.dump_logits,
             args.cpus,
             args.debug, args.eval_only
         )
