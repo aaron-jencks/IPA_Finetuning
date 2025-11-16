@@ -454,7 +454,7 @@ def do_train_run(
             train_eval_dataset,
             train_eval_dataset,
             eval_rows, display_incorrect,
-            logit_dir, dump_logits,
+            logit_dir, False,
             debug=debug,
         )
     else:
