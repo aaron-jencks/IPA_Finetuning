@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 import argparse
+import os
+from multiprocessing import Pool
+import pathlib
+
 import numpy as np
 from sklearn.metrics import f1_score, accuracy_score
+from tqdm import tqdm
 
 
 def load_labels_and_preds(path: str):
@@ -48,13 +53,30 @@ def compute_metric(labels, preds, metric: str):
         raise ValueError(f"Unknown metric: {metric}")
 
 
+def _one_iteration(labels, preds_a, preds_b, metric, observed):
+    """
+    Perform ONE randomization iteration.
+    Returns 1 if |diff| >= |observed|, else 0.
+    """
+    n = len(labels)
+    rng = np.random.default_rng()   # independent RNG per process
+    swap = rng.random(n) < 0.5
+
+    a_new = np.where(swap, preds_b, preds_a)
+    b_new = np.where(swap, preds_a, preds_b)
+
+    diff = compute_metric(labels, a_new, metric) - \
+           compute_metric(labels, b_new, metric)
+
+    return int(abs(diff) >= abs(observed))
+
+
 def approximate_randomization_test(
     labels,
     preds_a,
     preds_b,
     metric: str = "macro_f1",
     iterations: int = 10000,
-    seed: int | None = None,
 ):
     """
     Approximate randomization test for multi-class classification.
@@ -65,7 +87,6 @@ def approximate_randomization_test(
     - iterations: number of randomization iterations
     - seed: optional random seed
     """
-    rng = np.random.default_rng(seed)
 
     labels = np.asarray(labels)
     preds_a = np.asarray(preds_a)
@@ -75,23 +96,54 @@ def approximate_randomization_test(
         labels, preds_b, metric
     )
 
+    args = [
+        (labels, preds_a, preds_b, metric, observed)
+        for _ in range(iterations)
+    ]
+
     count = 0
-    n = len(labels)
-
-    for _ in range(iterations):
-        # For each example, swap A/B preds with prob 0.5
-        swap = rng.random(n) < 0.5
-        a_new = np.where(swap, preds_b, preds_a)
-        b_new = np.where(swap, preds_a, preds_b)
-
-        diff = compute_metric(labels, a_new, metric) - compute_metric(
-            labels, b_new, metric
-        )
-        if abs(diff) >= abs(observed):
-            count += 1
+    with Pool(processes=os.cpu_count()) as pool:
+        for r in tqdm(pool.starmap(_one_iteration, args),
+                      total=iterations,
+                      desc="sampling"):
+            count += r
 
     p_value = (count + 1) / (iterations + 1)
     return observed, p_value
+
+
+def do_significance_run(ortho, ipa, metric, iterations):
+    labels_a, preds_a = load_labels_and_preds(ortho)
+    labels_b, preds_b = load_labels_and_preds(ipa)
+
+    # sanity: same labels & order
+    check_alignment(labels_a, labels_b)
+
+    labels = labels_a
+
+    # print basic metrics first
+    m_a = compute_metric(labels, preds_a, metric)
+    m_b = compute_metric(labels, preds_b, metric)
+
+    print(f"Metric: {metric}")
+    print(f"Model A (normal): {m_a:.6f}")
+    print(f"Model B (ipa): {m_b:.6f}")
+    print(f"Observed difference (A - B): {m_a - m_b:.6f}")
+
+    obs_diff, p_value = approximate_randomization_test(
+        labels,
+        preds_a,
+        preds_b,
+        metric=metric,
+        iterations=iterations,
+    )
+
+    print("\nApproximate randomization test")
+    print(f"Iterations: {iterations}")
+    print(f"Observed diff recomputed: {obs_diff:.6f}")
+    print(f"p-value: {p_value:.6g}")
+
+    return m_a, m_b, obs_diff, p_value
 
 
 def main():
@@ -101,16 +153,10 @@ def main():
             "using predictions saved from HuggingFace Trainer."
         )
     )
-    parser.add_argument(
-        "model_a",
-        type=str,
-        help="Path to .npz file for model A (must contain 'labels' and 'preds')",
-    )
-    parser.add_argument(
-        "model_b",
-        type=str,
-        help="Path to .npz file for model B (must contain 'labels' and 'preds')",
-    )
+    parser.add_argument('logit_path', type=pathlib.Path, help='path to the directory containing logit files')
+    parser.add_argument('task', type=str, help='name of the task')
+    parser.add_argument('languages', type=str, nargs=2, help='language pair')
+    parser.add_argument('date_string', type=str, help='date string')
     parser.add_argument(
         "--metric",
         type=str,
@@ -124,45 +170,29 @@ def main():
         default=10000,
         help="Number of randomization iterations (default: 10000)",
     )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=None,
-        help="Random seed for reproducibility (default: None)",
-    )
 
     args = parser.parse_args()
 
-    labels_a, preds_a = load_labels_and_preds(args.model_a)
-    labels_b, preds_b = load_labels_and_preds(args.model_b)
+    permutations = [
+        ([args.languages[0]], args.languages[0]),
+        ([args.languages[0]], args.languages[1]),
+        ([args.languages[1]], args.languages[0]),
+        ([args.languages[1]], args.languages[1]),
+        (args.languages, args.languages[0]),
+        (args.languages, args.languages[1]),
+    ]
 
-    # sanity: same labels & order
-    check_alignment(labels_a, labels_b)
+    results = []
+    for train_langs, eval_lang in permutations:
+        print(f'Testing {train_langs} -> {eval_lang}')
+        fname_normal = args.logit_path / f"{args.task}-{'-'.join(train_langs)}-{eval_lang}-normal-{args.date_string}.npz"
+        fname_ipa = args.logit_path / f"{args.task}-{'-'.join(train_langs)}-{eval_lang}-ipa-{args.date_string}.npz"
+        norm_f1, ipa_f1, _, p_value = do_significance_run(fname_normal, fname_ipa, args.metric, args.iterations)
+        results.append((train_langs, eval_lang, norm_f1, ipa_f1, p_value))
 
-    labels = labels_a
-
-    # print basic metrics first
-    m_a = compute_metric(labels, preds_a, args.metric)
-    m_b = compute_metric(labels, preds_b, args.metric)
-
-    print(f"Metric: {args.metric}")
-    print(f"Model A ({args.model_a}): {m_a:.6f}")
-    print(f"Model B ({args.model_b}): {m_b:.6f}")
-    print(f"Observed difference (A - B): {m_a - m_b:.6f}")
-
-    obs_diff, p_value = approximate_randomization_test(
-        labels,
-        preds_a,
-        preds_b,
-        metric=args.metric,
-        iterations=args.iterations,
-        seed=args.seed,
-    )
-
-    print("\nApproximate randomization test")
-    print(f"Iterations: {args.iterations}")
-    print(f"Observed diff recomputed: {obs_diff:.6f}")
-    print(f"p-value: {p_value:.6g}")
+    print('\nFinal Results:')
+    for row in results:
+        print(row)
 
 
 if __name__ == "__main__":
